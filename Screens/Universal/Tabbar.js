@@ -14,7 +14,7 @@ function Tabbar() {
         <Tab.Navigator
 
             screenOptions={{
-                tabBarActiveTintColor: '#009688',  // Green color when focused
+                tabBarActiveTintColor: '#00B1E7',  // Green color when focused
                 tabBarInactiveTintColor: '#000000',  // Black color when not focused
 
                 // tabBarBackground: () => (
@@ -42,7 +42,7 @@ function Tabbar() {
                     
                     tabBarLabel: 'Home',
                     tabBarIcon: ({ focused }) => (
-                        <Image style={tw`h-8 w-8`} source={focused ? require("../../Images/homeg.png") : require("../../Images/homec.png")} />
+                        <Image style={tw`h-8 w-8`} source={focused ? require("../../Images/homeb.png") : require("../../Images/home.png")} />
                     ),
                 }}
                 name="Home"
@@ -52,9 +52,9 @@ function Tabbar() {
             <Tab.Screen
                 options={{
                    
-                    tabBarLabel: 'Sessions',
+                    tabBarLabel: 'Add Doctor',
                     tabBarIcon: ({ focused }) => (
-                        <Image style={tw`h-8 w-8`} source={focused ? require("../../Images/vrglassesg.png") : require("../../Images/vrglasses.png")} />
+                        <Image style={tw`h-8 w-8`} source={focused ? require("../../Images/doctorb.png") : require("../../Images/doctor.png")} />
                     ),
                 }}
                 name="Sessions"
@@ -66,9 +66,9 @@ function Tabbar() {
                 name="Yourplan"
                 options={{
                    
-                    tabBarLabel: 'Yourplan',
+                    tabBarLabel: 'Appointment',
                     tabBarIcon: ({ focused }) => (
-                        <Image style={tw`h-8 w-8`} source={focused ? require("../../Images/subscriptiong.png") : require("../../Images/subscription.png")} />
+                        <Image style={tw`h-8 w-8`} source={focused ? require("../../Images/to-do-listb.png") : require("../../Images/to-do-list.png")} />
                     ),
                 }}
                 component={Yourplan}
@@ -83,7 +83,7 @@ function Tabbar() {
                    
                     tabBarLabel: 'Profile',
                     tabBarIcon: ({ focused }) => (
-                        <Image style={tw`h-8 w-8`} source={focused ? require("../../Images/persong.png") : require("../../Images/person.png")} />
+                        <Image style={tw`h-8 w-8`} source={focused ? require("../../Images/userb.png") : require("../../Images/user.png")} />
                     ),
                 }}
             />

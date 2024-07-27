@@ -1,127 +1,102 @@
-import { View, Text, TouchableOpacity, ActivityIndicator } from 'react-native'
+import { View, Text, TouchableOpacity, Image, Alert, ActivityIndicator } from 'react-native'
 import React, { useState } from 'react'
 import tw from "twrnc"
 import { Input, showToast } from '../Universal/Input'
 // import CheckBox from '@react-native-community/checkbox';
 import { Buttonnormal } from '../Universal/Buttons';
 import Screensheader from '../Universal/Screensheader';
-import Toast from 'react-native-toast-message';
-import { useFocusEffect } from '@react-navigation/native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+// import LinearGradient from 'react-native-linear-gradient'
+import { signInWithEmailAndPassword } from 'firebase/auth'
+import { auth, db } from '../../Firebase'
+import Toast from 'react-native-toast-message'
 import Deviceinfo from 'react-native-device-info';
+import AsyncStorage from '@react-native-async-storage/async-storage'
+import { collection, doc, getDoc, onSnapshot, query, where } from 'firebase/firestore'
+import { useFocusEffect } from '@react-navigation/native'
 
 const Login = ({ navigation }) => {
 
   const [customerflag, setcustomerflag] = useState(true)
   const [customerflag1, setcustomerflag1] = useState(false)
   const [toggleCheckBox, setToggleCheckBox] = useState(false)
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setemail] = useState("")
+  const [password, setpassword] = useState("")
   const [loading, setloading] = useState(false)
-
+  const [GetData, setGetData] = useState([]);
 
   useFocusEffect(
+
     React.useCallback(() => {
+      console.log("ma chala ")
+      const coll = collection(db, 'Signup');
+      const q = query(coll, where('role', '==', "admin"));
 
-      return () => {
-        setEmail(null)
-        setPassword(null)
-      }
-    }, []),
-  );
-
-  const handlelogin = async () => {
-    if (!email || !password) {
-      showToast("error", "Error", "Required Field", true, 3000);
-    }
-    else {
-
-      const formData = new FormData();
-      formData.append('password', password);
-      formData.append('email', email);
-
-      try {
-        setloading(true)
-        const response = await fetch('https://vr.evolvsolution.com/api/login', {
-          method: 'POST',
-          body: formData,
-        });
-
-        const result = await response.json();
-        if (response.ok) {
-          // setloading(false)
-          console.log('Signup successful:', result);
-          // navigation.navigate('Subplan')
-          console.log("token :", result.data.token);
-          AsyncStorage.setItem("token", result.data.token).then(() => {
-            getinfo(result.data.token)
-            setEmail(null)
-            setPassword(null)
-          })
-
-        } else {
-
-          setloading(false)
-          showToast("error", "Error", response.status === 401 ? result.message : result.errors[0], true, 3000);
-          // console.error('Signup failed:', result);
-
-        }
-      } catch (error) {
-        setloading(false)
-        showToast("error", "Error", error, true, 3000);
-        console.error('Catch Error:', error)
-      }
-    }
-  };
-
-
-  const getinfo = async (token) => {
-
-    try {
-
-      const response = await fetch('https://vr.evolvsolution.com/api/user', {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`, // Replace YOUR_TOKEN_HERE with the actual token
-        },
+      const unSubscribe = onSnapshot(q, snapshot => {
+        console.log(snapshot.docs.length);
+        setGetData(
+          snapshot.docs.map(doc => ({
+            selecteduser: doc.data(),
+          })),
+        );
       });
 
-      const result = await response.json();
-      if (response.ok) {
-        const id = await Deviceinfo.getUniqueId();
+      // Cleanup function to unsubscribe from the snapshot listener
+      return () => {
+        unSubscribe();
+      };
+    }, []) // Empty dependency array ensures this runs only on focus and cleanup on blur
+  );
 
-        console.log('Request successful:', result);
-        // navigation.navigate('Subplan')
-        console.log("result :", result.data.subscription);
-        // navigation.navigate('Subplan')
-        if (result.data.subscription === null) {
-        
-          navigation.navigate('Subplan')
-          setEmail(null);
-          setPassword(null);
-          setloading(false);
-          console.log("result :", result.data.subscription);
-        }
-        else {
-          AsyncStorage.setItem("mobileid", id).then(() => {
-            
-            navigation.navigate('Tabbar')
-            setEmail(null);
-            setPassword(null);
-            setloading(false);
-            console.log("result else:", result.data.subscription);
+  const loginwithemailandpass = async () => {
+    const id = await Deviceinfo.getUniqueId();
+    if (!email || !password) {
+      showToast("error", "Field Required", "Must Fill All The Field", true, 1000)
+    }
+
+    else {
+      setloading(true)
+      try {
+        signInWithEmailAndPassword(auth, email, password)
+          .then(data1 => {
+            // navigation.navigate("Tabbar")
+            console.log("get email :", GetData[0].selecteduser.email);
+            console.log("login email :", data1.user.email);
+            if (GetData[0].selecteduser.email === data1.user.email) {
+              console.log("admin");
+              AsyncStorage.setItem("mobileid", id).then(() => {
+                AsyncStorage.setItem("role", "admin").then(() => {
+                  AsyncStorage.setItem("email", data1.user.email).then(() => {
+                    navigation.navigate("Tabbar")
+                    setloading(false)
+                    console.log("unique id ", id);
+                  })
+                })
+              })
+            }
+            else {
+              console.log("user");
+              AsyncStorage.setItem("mobileid", id).then(() => {
+                AsyncStorage.setItem("role", "user").then(() => {
+                  AsyncStorage.setItem("email", data1.user.email).then(() => {
+
+                    navigation.navigate("Tabbar")
+                    setloading(false)
+                    console.log("unique id ", id);
+                  })
+                })
+              })
+            }
           })
+          .catch(error => {
+            setloading(false)
 
-        }
+            showToast("error", "Error", error.message, true, 1000)
 
-      } else {
-        setloading(false);
-        showToast("error", "Error", response.status === 401 ? result.message : result.errors[0], true, 3000);
+          });
+      } catch (error) {
+        setloading(false)
+        showToast("error", "Error", 'Plzz Enter Valid Email Or Pass', true, 1000)
       }
-    } catch (error) {
-      setloading(false);
-      showToast("error", "Error", error, true, 3000);
-      console.error('Catch Error:', error);
     }
   };
 
@@ -139,10 +114,10 @@ const Login = ({ navigation }) => {
         />
         <View style={tw`items-center`}>
           <View style={tw`w-80 h-20 items-center justify-center mt-5`}>
-            <Text style={[tw`text-3xl font-bold text-gray-400`, { color: '#199A8E' }]}>
+            <Text style={[tw`text-3xl font-bold text-gray-400`, { color: '#00B1E7' }]}>
               Welcome
             </Text>
-            <Text style={[tw`text-sm font-normal text-gray-400`, { color: '#199A8E' }]}>
+            <Text style={[tw`text-sm font-normal text-gray-400`, { color: '#00B1E7' }]}>
               Sign in to acess your account
             </Text>
           </View>
@@ -182,7 +157,7 @@ const Login = ({ navigation }) => {
 
           <Input
             value={email}
-            onchangetext={setEmail}
+            onchangetext={setemail}
             source={require("../../Images/mail.png")}
             placeholder={"Enter Your Email"}
           />
@@ -190,7 +165,7 @@ const Login = ({ navigation }) => {
           <Input
             value={password}
             entry={true}
-            onchangetext={setPassword}
+            onchangetext={setpassword}
             source={require("../../Images/padlock.png")}
             placeholder={"Enter Your Password"}
           />
@@ -204,7 +179,7 @@ const Login = ({ navigation }) => {
                 navigation.navigate('Forget')
               }}
             >
-              <Text style={[tw` text-center`, { color: '#199A8E' }]}>Forgot Password?</Text>
+              <Text style={[tw` text-center`, { color: '#00B1E7' }]}>Forgot Password?</Text>
             </TouchableOpacity>
           </View>
           {
@@ -215,10 +190,10 @@ const Login = ({ navigation }) => {
                 <Buttonnormal
                   onPress={() => {
                     // navigation.navigate('Subplan')
-                    handlelogin()
+                    loginwithemailandpass()
                   }}
-                  c1={'#199A8E'}
-                  c2={'#199A8E'}
+                  c1={'#0B4064'}
+                  c2={'#0B4064'}
                   style={tw`text-white`}
                   title={"LOGIN"}
                 />
@@ -234,7 +209,7 @@ const Login = ({ navigation }) => {
               <Text>
                 New Member?
 
-                <Text style={{ color: '#199A8E' }}> Sign Up Now</Text>
+                <Text style={{ color: '#00B1E7' }}> Sign Up Now</Text>
 
               </Text>
             </View>

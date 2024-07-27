@@ -1,270 +1,339 @@
-import { View, Text, Image, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native'
-import React, { useContext, useState } from 'react'
-// import { AppContext } from '../../AppContext';
-import tw from 'twrnc'
-import Screensheader from '../Universal/Screensheader';
-import LinearGradient from 'react-native-linear-gradient';
-import { showToast } from '../Universal/Input';
-import { useFocusEffect } from '@react-navigation/native';
+import {
+  View,
+  Text,
+  SafeAreaView,
+  ScrollView,
+  Image,
+  TouchableOpacity,
+  Alert,
+  ActivityIndicator,
+  StyleSheet,
+} from 'react-native';
+import React, { useEffect, useState, useCallback, useContext } from 'react';
+import tw from 'twrnc';
+import { Error, Input1, showToast } from '../../Screens/Universal/Input';
+import { Formik } from 'formik';
+import * as Yup from 'yup';
+import Screensheader from '../../Screens/Universal//Screensheader';
+import storage from '@react-native-firebase/storage';
+import { ref1, app, db } from '../../Firebase';
+import {
+  doc,
+  updateDoc,
+} from 'firebase/firestore';
+
+import FilePicker from 'react-native-document-picker';
+import uuid from 'react-native-uuid';
+import { getAuth } from 'firebase/auth';
+import { useFocusEffect, useIsFocused } from '@react-navigation/native';
+import { Buttonnormal } from '../../Screens/Universal/Buttons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import Toast from 'react-native-toast-message';
+
+const Sessions = ({ navigation,  }) => {
+  // const { url, pname,pid } = route.params;
+ 
+  const [loading, setloading] = useState(false);
+
+  //for image
+  const [imglink1, setimglink1] = useState(null);
+  const [name1, setimgname1] = useState(null);
+  const [type1, setimgtype1] = useState(null);
+  const [filedata1, setfiledata1] = useState("https://firebasestorage.googleapis.com/v0/b/supplysync-3e4b1.appspot.com/o/allfiles%2Fimages.jpg?alt=media&token=0aa9155e-5ebd-4b22-8f77-c9d70d280507");
+  const [user, setuser] = useState(null);
+
+  const userid = uuid.v4();
 
 
-const Sessions = ({ navigation }) => {
-  const [Data, setdata] = useState([])
-  const [Data1, setdata1] = useState([])
-  const [token, settoken] = useState("")
-  const [loading, setloading] = useState(true)
-  const [cat,setcat] = useState ("All Videos")
-  
-
-  const vrImages = [
-    "https://vection-cms-prod.s3.eu-central-1.amazonaws.com/Adobe_Stock_506941973_cc825880a8.jpeg",
-    "https://images.inc.com/uploaded_files/image/1920x1080/getty_921019710_413686.jpg",
-    "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRxppOK6lXDXS0sAPzkkXzgeEvERi9EwdBre_AcvFHkX1kwufIiS1qFpDCiDsKKcWkdrwQ&usqp=CAU",
-    "https://imageio.forbes.com/specials-images/imageserve/5f239af66507ee97a5379ffa/These-3-Business-Functions-Could-Be-Transformed-By-VR/960x0.jpg?height=474&width=711&fit=bounds",
-    "https://jacoblund.com/cdn/shop/products/photo-id-2000512876613-business-team-using-virtual-reality-headset-in-meeting_1200x800.jpg?v=1563897567",
-    "https://media.hswstatic.com/eyJidWNrZXQiOiJjb250ZW50Lmhzd3N0YXRpYy5jb20iLCJrZXkiOiJnaWZcL1ZSLXVzZXMuanBnIiwiZWRpdHMiOnsicmVzaXplIjp7IndpZHRoIjo4Mjh9fX0=",
-    "https://www.glueup.com/storage/app/uploads/public/5f3/65e/8ea/5f365e8ea741c038111951.jpg"
-  ];
-
+  const Validation = Yup.object().shape({
+      name: Yup.string().required('Must be filled'),
+  });
 
   useFocusEffect(
-    React.useCallback(() => {
-      const checkUserRole = async () => {
-        AsyncStorage.getItem("token").then((token) => {
-          settoken(token)
-          getinfo(token)
-          getallvideo(token)
+      useCallback(() => {
 
-          console.log(token);
+          AsyncStorage.getItem('email').then((email) => {
+              setuser(email);
+          });
+          return () => {
 
-        })
-      };
-      checkUserRole();
-      return () => { };
-    }, []) // Empty dependency array ensures this runs only on focus and cleanup on blur
+          };
+      }, [])
+
   );
 
-
-  const getinfo = async (token) => {
-
-    try {
-
-      const response = await fetch('https://vr.evolvsolution.com/api/category', {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`, // Replace YOUR_TOKEN_HERE with the actual token
-        },
-      });
-
-      const result = await response.json();
-      if (response.ok) {
-
-        console.log('Request successful:', result);
-        // navigation.navigate('Subplan')
-        console.log("result :", result.data);
-        setdata(result.data)
-
-
-      } else {
-
-        showToast("error", "Error", response.status === 401 ? result.message : result.errors[0], true, 3000);
+  const choosefileimg = async () => {
+      try {
+          const res = await FilePicker.pickSingle({
+              presentationStyle: 'overFullScreen',
+              copyTo: 'cachesDirectory',
+              type: [FilePicker.types.images],
+          });
+          // if (res.size / 1000 / 1000 <= 5.0) {
+          setfiledata1(res.uri);
+          console.log(res.size / 1000 / 1000);
+          console.log(res.uri);
+          const path = res.fileCopyUri.replace('file://', '');
+          setimglink1(path);
+          setimgname1(res.name);
+          setimgtype1(res.type);
+      } catch (error) {
+          if (FilePicker.isCancel(error)) {
+              console.log('user cancel the pick file');
+          } else {
+              console.log('errror', error);
+          }
       }
-    } catch (error) {
-
-      showToast("error", "Error", error, true, 3000);
-      console.error('Catch Error:', error);
-    }
-  };
-  // const { state } = useContext(AppContext);
-  const getcatvideo = async (id) => {
-
-    try {
-       setloading(true)
-      const response = await fetch(`https://vr.evolvsolution.com/api/category/${id}`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`, // Replace YOUR_TOKEN_HERE with the actual token
-        },
-      });
-
-      const result = await response.json();
-      if (response.ok) {
-
-        console.log('Request successful:', result);
-        // navigation.navigate('Subplan')
-        console.log("result :", result.data);
-        const newdata = [result.data]
-        console.log("result2:", newdata);
-        setdata1(newdata)
-        setloading(false)
-
-      } else {
-        setloading(false)
-        showToast("error", "Error", response.status === 401 ? result.message : result.errors[0], true, 3000);
-      }
-    } catch (error) {
-      setloading(false)
-      showToast("error", "Error", error, true, 3000);
-      console.error('Catch Error:', error);
-    }
   };
 
-  const getallvideo = async (token) => {
 
-    try {
 
-      const response = await fetch(`https://vr.evolvsolution.com/api/category/`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`, // Replace YOUR_TOKEN_HERE with the actual token
-        },
-      });
 
-      const result = await response.json();
-      if (response.ok) {
-
-        console.log('Request successful:', result);
-        // navigation.navigate('Subplan')
-        console.log("result :", result.data);
-        
-        setdata1(result.data)
-        setloading(false)
-
-      } else {
-        setloading(false)
-        showToast("error", "Error", response.status === 401 ? result.message : result.errors[0], true, 3000);
+  const uploadupdatefile = async (productname) => {
+      if (imglink1) {
+         
+          setloading(true);
+          const reference = storage().ref(`allfiles/${name1}`);
+          await reference.putFile(imglink1);
+          const url = await storage().ref(`allfiles/${name1}`).getDownloadURL();
+          console.log('your file is locating :', url);
+          Signinwithemailandpass(productname, url);
       }
-    } catch (error) {
-      setloading(false)
-      showToast("error", "Error", error, true, 3000);
-      console.error('Catch Error:', error);
-    }
+      else {
+  
+              Alert.alert('Please select a file to upload');
+              
+      }
   };
+
+  const Signinwithemailandpass = async (productname,url) => {
+      if (!email || !password || !productname) {
+        showToast("error", "Field Required", "Must Fill All The Field", true, 1000)
+      }
+  
+      else {
+      //   setloading(true)
+        createUserWithEmailAndPassword(auth, email, password)
+          .then(data => {
+            console.log(data.user.email);
+  
+            setDoc(doc(db, 'Signup', userid), {
+              fullname: name,
+              role: 'user',
+              email: email.toLowerCase(),
+              password,
+              userid,
+              timestamp: serverTimestamp(),
+            })
+              .then(() => {
+                console.log('done');
+  
+                setDoc(doc(db, 'Profile', userid), {
+                  fullname: name,
+                  email: email.toLowerCase(),
+                  profilephoto: url,
+                  role: 'user',
+                  userid,
+                  timestamp: serverTimestamp(),
+                })
+                  .then(() => {
+                    setloading(false)
+                    Alert.alert('Congratulation', 'User Has Been Register', [
+                      {
+                        text: 'OK',
+                        onPress: () => navigation.navigate('Login'),
+                      },
+                    ]);
+                  })
+                  .catch(error => {
+                    setloading(false)
+                    // console.log(error);
+                    Alert.alert('this :', error.message);
+                  });
+              })
+              .catch(error => {
+                setloading(false)
+                // console.log(error);
+                Alert.alert('this :', error.message);
+              });
+          })
+          .catch(error => {
+            setloading(false)
+            // console.log("this : ",error.message);
+            Alert.alert('this :', error.message);
+          });
+      }
+    };
+
 
   return (
-    <View style={tw`flex-1 bg-white`}>
-      <Screensheader
-        name={'YOUR SESSION'}
-        left={15}
-        onPress={() => {
-          navigation.navigate('Home');
-        }}
-      />
-      {/* {
-                state.cart.map((item, index) => ( */}
-
-
       <>
 
-        <View
-          style={tw`w-85 h-12   flex-row  self-center  items-center`}>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            {/* card 1 */}
+          <>
+              <View style={[tw`flex-1 flex`, { backgroundColor: '#FFFFFF' }]}>
+                  <>
+                      <Formik
+                          initialValues={{
+                              name: ""
+                          }}
+                          validationSchema={Validation}
+                          onSubmit={(values, { resetForm }) => {
+                                  
+                                  uploadupdatefile(
+                                      values.name
+                                  )
+                              
 
-            <>
-            <TouchableOpacity
-                  // key={index}
-                  onPress={() => {
-                     setloading(true)
-                     getallvideo(token)
-                     setcat("All Videos")
-                  }}>
-                  <View style={[tw`bg-${cat === "All Videos" ? 'green-500' : "white"} h-10 w-30 ml-5 border flex-row items-center justify-evenly rounded-3xl`, { borderRadius: 50, borderColor: '#199A8E' }]}>
-                    <Image style={tw`h-5 w-5 rounded-full`} source={{ uri: vrImages[0] }} />
-                    <Text numberOfLines={1} style={tw`text-center w-20`}>{"All Videos"}</Text>
-                  </View>
-                </TouchableOpacity>
+                          }}>
+                          {({
+                              handleChange,
+                              handleBlur,
+                              handleSubmit,
+                              errors,
+                              touched,
+                              values,
+                              isValid,
+                          }) => (
+                              <SafeAreaView>
+                                  <ScrollView vertical showsVerticalScrollIndicator={true}>
+                                      <View style={tw`h-180`}>
+                                          <Screensheader
+                                              name={'ADD DOCTOR'}
+                                              left={15}
+                                              onPress={() => navigation.goBack()}
+                                          />
 
-              {Data?.map((item, index) => (
-                <TouchableOpacity
-                  key={index}
-                  onPress={() => {
-                     setloading(true)
-                     getcatvideo(item.id)
-                     setcat(item.id)
-                  }}>
-                  <View style={[tw`bg-${cat === item.id ? 'green-500' : 'white'} h-10 w-20 ml-5 border flex-row items-center justify-evenly rounded-3xl`, { borderRadius: 50, borderColor: '#199A8E' }]}>
-                    <Image style={tw`h-5 w-5 rounded-full`} source={{ uri: item.image }} />
-                    <Text numberOfLines={1} style={tw`text-center w-12`}>{item.name}</Text>
-                  </View>
-                </TouchableOpacity>
+                                         
 
-              ))
-              }
+                                          <View
+                                              style={tw`flex flex-col w-80 self-center justify-around`}>
+                                              <TouchableOpacity onPress={() => choosefileimg()}>
+                                                  <View
+                                                      style={tw`flex w-80  items-center  mt-5 flex-col`}>
+                                                      <View
+                                                          style={tw`  h-30 border-2 rounded-full w-30 items-center border-dotted`}>
+                                                        
+                                                              <Image
+                                                                   source={{uri : filedata1}}
+                                                                  resizeMode='cover'
+                                                                  style={tw` w-29 h-29 rounded-full`}
+                                                              />
+                                                       
+                                                      </View>
+                                                      <View style={tw`mt-2 items-center`}>
+                                                          <Text style={tw`font-bold  `}>
+                                                              Add Profile Image
+                                                          </Text>
+                                                          <Text style={tw`text-xs  `}>Max 5mb</Text>
+                                                      </View>
+                                                  </View>
+                                              </TouchableOpacity>
+                                          </View>
 
-
-
-
-            </>
-
-
-          </ScrollView>
-        </View>
-      </>
-      <View >
-
-        {
-          loading ?
-            <ActivityIndicator style={tw`justify-center items-center mt-40`} size="large" color="#199A8E" /> :
-            <ScrollView vertical showsVerticalScrollIndicator={true}>
-              <View style={tw` self-center flex-1 mb-50 `}>
-                {Data1?.map((item, index) => (
-                  item.video.map((items, index) => (
-                    items.type === 'Mobile' &&
-                    <>
-                      <TouchableOpacity
-                      onPress={() => {
-                        navigation.navigate('Showvideo',{
-                          video : items.video
-                        });
-                      }}
-                      >
-                        <View style={[tw`h-50 mt-5 w-80 border `, { borderColor: '#199A8E', borderTopLeftRadius: 50, borderBottomRightRadius: 50 }]}>
-                          <Image
-                            style={[tw`w-79  h-30`, { borderTopLeftRadius: 50 }]}
-                            source={{
-                              uri: `https://vr.evolvsolution.com/storage/app/public/${items.image}`,
-                            }}
-                            resizeMode="cover"
-                          />
-                          <View
-                            style={[tw`h-15 w-70  self-start items-center justify-center border-b-2   rounded-xl`, { borderColor: '#199A8E' }]}>
+                                          <View style={tw` self-center  h-70`}>
+                                              <View style={tw`top-5`}>
+                                                  <Input1
+                                                      placeholder="Add Doctor Name"
+                                                      onchangetext={handleChange('name')}
+                                                      onblur={handleBlur('name')}
+                                                      value={values.name}
+                                                      error={touched.name ? errors.name : false}
+                                                  />
+                                              </View>
 
 
-                            <View style={tw`flex-col w-65 justify-between self-center`}>
-                              <Text
-                                numberOfLines={1}
-                                style={[tw`mt-1 w-60 text-base font-medium text-gray-400`]}>
-                                Session Title: {items.title}
-                              </Text>
-                              <Text
-                                style={tw`mt-1  text-base text-gray-400 font-medium`}>
-
-                                Category: {item.name}
-
-                              </Text>
-                            </View>
-                          </View>
-
-                        </View>
-                      </TouchableOpacity>
+                                              <View style={tw`top-5`}>
+                                                  <Input1
+                                                      placeholder="Add Doctor Designation"
+                                                      onchangetext={handleChange('name')}
+                                                      onblur={handleBlur('name')}
+                                                      value={values.name}
+                                                      error={touched.name ? errors.name : false}
+                                                  />
+                                              </View>
 
 
-                    </>
-                  ))
-                ))}
+                                              <View style={tw`top-5`}>
+                                                  <Input1
+                                                      placeholder="Add Doctor Email"
+                                                      onchangetext={handleChange('name')}
+                                                      onblur={handleBlur('name')}
+                                                      value={values.name}
+                                                      error={touched.name ? errors.name : false}
+                                                  />
+                                              </View>
+
+
+                                              <View style={tw`top-5`}>
+                                                  <Input1
+                                                      placeholder="Add Doctor Phone"
+                                                      onchangetext={handleChange('name')}
+                                                      onblur={handleBlur('name')}
+                                                      value={values.name}
+                                                      error={touched.name ? errors.name : false}
+                                                  />
+                                              </View>
+
+
+                                              <View style={tw`top-5`}>
+                                                  <Input1
+                                                      placeholder="Add Doctor Timing"
+                                                      onchangetext={handleChange('name')}
+                                                      onblur={handleBlur('name')}
+                                                      value={values.name}
+                                                      error={touched.name ? errors.name : false}
+                                                  />
+                                              </View>
+
+                                              
+
+
+
+                                              {
+                                                  loading ?
+                                                      <ActivityIndicator
+                                                          style={tw`mt-10 `}
+                                                          size="large"
+                                                          color="#199A8E"
+                                                      />
+                                                      :
+                                                      <View style={tw`mt-10`}>
+                                                          <Buttonnormal
+                                                              onPress={handleSubmit}
+                                                              c1={'#0B4064'}
+                                                              c2={'#0B4064'}
+                                                              style={tw`text-white`}
+                                                              title={"ADD DOCTOR"}
+                                                          />
+                                                      </View>
+
+                                              }
+
+
+
+                                          </View>
+                                      </View>
+                                  </ScrollView>
+                              </SafeAreaView>
+                          )}
+                      </Formik>
+                  </>
               </View>
-            </ScrollView>
-        }
+              <Toast />
+          </>
 
-      </View>
-      {/* ))
-            } */}
+      </>
+  );
+};
 
+export default Sessions;
 
-    </View>
-  )
-}
-
-export default Sessions
+var styles = StyleSheet.create({
+  backgroundVideo: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      bottom: 0,
+      right: 0,
+  },
+});

@@ -1,66 +1,51 @@
-import { View, Text, TouchableOpacity, ActivityIndicator } from 'react-native'
+import { View, Text, TouchableOpacity, Alert,ActivityIndicator } from 'react-native'
 import React, { useState } from 'react'
 import tw from "twrnc"
 import { Input, showToast } from '../Universal/Input'
-import CheckBox from '@react-native-community/checkbox';
+// import CheckBox from '@react-native-community/checkbox';
 import { Buttonnormal } from '../Universal/Buttons';
 import Screensheader from '../Universal/Screensheader';
-import Toast from 'react-native-toast-message';
-import { useFocusEffect } from '@react-navigation/native';
+import { getAuth, sendPasswordResetEmail } from 'firebase/auth'
+import { app } from '../../Firebase'
+import Toast from 'react-native-toast-message'
 
 const Forget = ({ navigation }) => {
 
   const [customerflag, setcustomerflag] = useState(true)
   const [customerflag1, setcustomerflag1] = useState(false)
   const [toggleCheckBox, setToggleCheckBox] = useState(false)
-
-  const [email, setemail] = React.useState('');
+  const [email, setemail] = useState("");
   const [loading, setloading] = useState(false);
 
-  useFocusEffect(
-    React.useCallback(() => {
-      
-      return () => {
-       setemail(null)
-      }
-    }, []),
-  );
+  const auth = getAuth(app);
 
-  const handleforget = async () => {
-    if (!email) {
-      showToast("error", "Error", "Required Field", true, 3000);
-    }
-    else {
+  const RESETemail = async () => {
+    
+    email ?
+    setloading(true)
+      (
+        sendPasswordResetEmail(auth, email)
+          .then(() => {
+            // Alert.alert("RESET EMAIL SEND IN YOUR SPAM SECTION IN EMAIL BOX"),
 
-    const formData = new FormData();
+             setloading(false)
+            Alert.alert('Success', 'RESET EMAIL SEND IN YOUR SPAM SECTION IN EMAIL BOX', [
 
-    formData.append('email', email);
+              { text: 'OK', onPress: () => navigation.navigate("Login") },
+            ]);
+          })
+          .catch((error) => {
+            setloading(false)
 
-    try {
-      setloading(true)
-      const response = await fetch('https://vr.evolvsolution.com/api/forgot-password', {
-        method: 'POST',
-        body: formData,
-      });
+            Alert.alert("some error", error.message);
+          })
+      )
+      :
+      (
 
-      const result = await response.json();
-      console.log("result :",result);
-      if (response.ok) {
-        setloading(false)
-        // console.log('Signup successful:', result);
-        navigation.navigate('Newpass', { email: email });
-      } else {
-        setloading(false)
-        showToast("error", "Error", result.errors[0], true, 3000);
-        // console.error('Signup failed:', result);
-      }
-    } catch (error) {
-      setloading(false)
-      showToast("error", "Error", error, true, 3000);
-      console.error('Error:', error);
-    }
+        showToast("error", "Error", "Please Fill The Email", true, 3000)
+      )
   }
-  };
 
 
   return (
@@ -76,10 +61,10 @@ const Forget = ({ navigation }) => {
         />
         <View style={tw`items-center`}>
           <View style={tw`w-80 h-20 items-start justify-center mt-5`}>
-            <Text style={[tw`text-3xl font-bold text-gray-400`, { color: '#199A8E' }]}>
+            <Text style={[tw`text-3xl font-bold text-gray-400`, { color: '#00B1E7' }]}>
               Forget Your Password?
             </Text>
-            <Text style={[tw`text-sm font-normal text-gray-400`, { color: '#199A8E' }]}>
+            <Text style={[tw`text-sm font-normal text-gray-400`, { color: '#00B1E7' }]}>
               Enter Your Email We Will Send You A Code
             </Text>
           </View>
@@ -103,10 +88,10 @@ const Forget = ({ navigation }) => {
                   <Buttonnormal
                     onPress={() => {
                       // navigation.navigate('Code')
-                      handleforget()
+                      RESETemail()
                     }}
-                    c1={'#199A8E'}
-                    c2={'#199A8E'}
+                    c1={'#0B4064'}
+                    c2={'#0B4064'}
                     style={tw`text-white`}
                     title={"SEND CODE"}
                   />

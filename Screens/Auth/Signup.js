@@ -1,12 +1,20 @@
-import { View, Text, TouchableOpacity, ActivityIndicator } from 'react-native'
+import { View, Text, TouchableOpacity, ActivityIndicator, Alert } from 'react-native'
 import React, { useState } from 'react'
 import tw from "twrnc"
 import { Input, showToast } from '../Universal/Input'
 import CheckBox from '@react-native-community/checkbox';
 import { Buttonnormal } from '../Universal/Buttons';
 import Screensheader from '../Universal/Screensheader';
+import { doc, setDoc, addDoc, serverTimestamp } from 'firebase/firestore';
+import { db, app, auth } from '../../Firebase';
+import uuid from 'react-native-uuid';
+import {
+  getAuth,
+  createUserWithEmailAndPassword,
+  sendEmailVerification,
+} from 'firebase/auth';
+// import LinearGradient from 'react-native-linear-gradient';
 import Toast from 'react-native-toast-message';
-import { useFocusEffect } from '@react-navigation/native';
 
 const Signup = ({ navigation }) => {
 
@@ -14,59 +22,68 @@ const Signup = ({ navigation }) => {
   const [customerflag1, setcustomerflag1] = useState(false)
   const [toggleCheckBox, setToggleCheckBox] = useState(false)
   const [loading, setloading] = useState(false)
+  const [name, setname] = useState("")
+  const [email, setemail] = useState("")
+  const [password, setpassword] = useState("")
+  const userid = uuid.v4();
 
-  const [firstName, setFirstName] = React.useState('');
-  const [lastName, setLastName] = React.useState('');
-  const [email, setEmail] = React.useState('');
-  const [password, setPassword] = React.useState('');
 
-
-  useFocusEffect(
-    React.useCallback(() => {
-
-      return () => {
-        setEmail(null)
-        setPassword(null)
-        setFirstName(null)
-        setLastName(null)
-      }
-    }, []),
-  );
-
-  const handleSignup = async () => {
-    if (!email || !password || !firstName || !lastName) {
-      showToast("error", "Error", "Required Field", true, 3000);
+  const Signinwithemailandpass = async () => {
+    if (!email || !password || !name) {
+      showToast("error", "Field Required", "Must Fill All The Field", true, 1000)
     }
+
     else {
+      setloading(true)
+      createUserWithEmailAndPassword(auth, email, password)
+        .then(data => {
+          console.log(data.user.email);
 
-      const formData = new FormData();
-      formData.append('first_name', firstName);
-      formData.append('last_name', lastName);
-      formData.append('email', email);
-      formData.append('password', password);
+          setDoc(doc(db, 'Signup', userid), {
+            fullname: name,
+            role: 'user',
+            email: email.toLowerCase(),
+            password,
+            userid,
+            timestamp: serverTimestamp(),
+          })
+            .then(() => {
+              console.log('done');
 
-      try {
-        setloading(true)
-        const response = await fetch('https://vr.evolvsolution.com/api/signup', {
-          method: 'POST',
-          body: formData,
+              setDoc(doc(db, 'Profile', userid), {
+                fullname: name,
+                email: email.toLowerCase(),
+                profilephoto: '',
+                role: 'user',
+                userid,
+                timestamp: serverTimestamp(),
+              })
+                .then(() => {
+                  setloading(false)
+                  Alert.alert('Congratulation', 'User Has Been Register', [
+                    {
+                      text: 'OK',
+                      onPress: () => navigation.navigate('Login'),
+                    },
+                  ]);
+                })
+                .catch(error => {
+                  setloading(false)
+                  // console.log(error);
+                  Alert.alert('this :', error.message);
+                });
+            })
+            .catch(error => {
+              setloading(false)
+              // console.log(error);
+              Alert.alert('this :', error.message);
+            });
+        })
+        .catch(error => {
+          setloading(false)
+          // console.log("this : ",error.message);
+          Alert.alert('this :', error.message);
         });
-
-        const result = await response.json();
-        if (response.ok) {
-          setloading(false)
-          console.log('Signup successful:', result);
-          navigation.navigate('Login');
-        } else {
-          setloading(false)
-          showToast("error", "Error", result.errors[0], true, 3000);
-          console.error('Signup failed:', result);
-        }
-      } catch (error) {
-        setloading(false)
-        showToast("error", "Error", result.errors[0], true, 3000);
-        console.error('Error:', error);
-      }
     }
   };
 
@@ -84,34 +101,30 @@ const Signup = ({ navigation }) => {
         />
         <View style={tw`items-center`}>
           <View style={tw`w-80 h-20 items-center justify-center mt-5`}>
-            <Text style={[tw`text-3xl font-bold text-gray-400`, { color: '#199A8E' }]}>
+            <Text style={[tw`text-3xl font-bold text-gray-400`, { color: '#00B1E7' }]}>
               Great
             </Text>
-            <Text style={[tw`text-sm font-normal text-gray-400`, { color: '#199A8E' }]}>
+            <Text style={[tw`text-sm font-normal text-gray-400`, { color: '#00B1E7' }]}>
               Sign Up To Create Your Account
             </Text>
           </View>
 
           <Input
-            onchangetext={setFirstName}
+            onchangetext={setname}
             source={require("../../Images/user.png")}
-            placeholder={"Your First Name"}
+            placeholder={"Your Full Name"}
           />
 
-          <Input
-            onchangetext={setLastName}
-            source={require("../../Images/user.png")}
-            placeholder={"Your Last Name"}
-          />
+          
 
           <Input
-            onchangetext={setEmail}
+            onchangetext={setemail}
             source={require("../../Images/mail.png")}
             placeholder={"Enter Your Email"}
           />
 
           <Input
-            onchangetext={setPassword}
+            onchangetext={setpassword}
             entry={true}
             source={require("../../Images/padlock.png")}
             placeholder={"Enter Your Password"}
@@ -138,10 +151,10 @@ const Signup = ({ navigation }) => {
                 <Buttonnormal
                   onPress={() => {
                     // navigation.navigate('Tabbar')
-                    handleSignup()
+                    Signinwithemailandpass()
                   }}
-                  c1={'#199A8E'}
-                  c2={'#199A8E'}
+                  c1={'#0B4064'}
+                  c2={'#0B4064'}
                   style={tw`text-white`}
                   title={"SIGNUP"}
                 />
@@ -162,7 +175,7 @@ const Signup = ({ navigation }) => {
               <Text>
                 Already Member?
 
-                <Text style={{ color: '#199A8E' }}> Login Now</Text>
+                <Text style={{ color: '#00B1E7' }}> Login Now</Text>
 
               </Text>
             </View>

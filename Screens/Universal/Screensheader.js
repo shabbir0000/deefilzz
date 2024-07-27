@@ -23,7 +23,7 @@ const Screensheader = ({ name, onPress ,left }) => {
         </TouchableOpacity>
       </View>
       <View style={tw`items-center  self-center`}>
-        <Text style={[tw`text-center  top-5 left-${left} text-2xl font-extrabold`,{color:'#199A8E'}]}>{name}</Text>
+        <Text style={[tw`text-center  top-5 left-${left} text-2xl font-extrabold`,{color:'#00B1E7'}]}>{name}</Text>
       </View>
       </View>
     </>

@@ -1,13 +1,34 @@
 import { View, Text, Image, TouchableOpacity, Alert } from 'react-native'
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import tw from "twrnc"
 import Options from '../Universal/Options'
 import AsyncStorage from '@react-native-async-storage/async-storage'
-import { useFocusEffect } from '@react-navigation/native'
-import { showToast } from '../Universal/Input'
+import { collection, onSnapshot, query, where } from 'firebase/firestore'
+import { db } from '../../Firebase'
 import Toast from 'react-native-toast-message'
 
 const Profile = ({ navigation }) => {
+
+  const [GetData, setGetData] = useState([]);
+
+  useEffect(() => {
+
+    AsyncStorage.getItem("email").then((email) => {
+      const coll = collection(db, 'Profile');
+      const q = query(coll, where('email', '==', email));
+
+      const unSubscribe = onSnapshot(q, snapshot => {
+        setGetData(
+          snapshot.docs.map(doc => ({
+            selecteduser: doc.data(),
+          })),
+        );
+      });
+      return () => {
+        unSubscribe();
+      };
+    })
+  }, []);
 
   const [name, setname] = useState("");
   const [fname, setfname] = useState("");
@@ -15,53 +36,7 @@ const Profile = ({ navigation }) => {
   const [email, setemail] = useState("");
 
 
-  useFocusEffect(
-    React.useCallback(() => {
-        const checkUserRole = async () => {
-           AsyncStorage.getItem("token").then((token)=>{
-            getinfo(token)
 
-           })
-        };
-        checkUserRole();
-        return () => { };
-    }, []) // Empty dependency array ensures this runs only on focus and cleanup on blur
-);
-
-
-  const getinfo = async (token) => {
-
-    try {
-
-      const response = await fetch('https://vr.evolvsolution.com/api/user', {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`, // Replace YOUR_TOKEN_HERE with the actual token
-        },
-      });
-
-      const result = await response.json();
-      if (response.ok) {
-    
-        console.log('Request successful:', result);
-        // navigation.navigate('Subplan')
-        console.log("result :", result.data.subscription);
-        setname(result.data.first_name +" "+ result.data.last_name)
-        setfname(result.data.first_name)
-        setlname(result.data.last_name)
-        setemail(result.data.email)
-       
-
-      } else {
-   
-        showToast("error", "Error", response.status === 401 ? result.message : result.errors[0], true, 3000);
-      }
-    } catch (error) {
-    
-      showToast("error", "Error", error, true, 3000);
-      console.error('Catch Error:', error);
-    }
-  };
 
 
   return (
@@ -74,17 +49,18 @@ const Profile = ({ navigation }) => {
         />
 
 
+
         <View style={tw`h-30 w-30 mt-10 items-center justify-center self-center border-black border rounded-full`}>
           <Image
             style={tw`h-30 w-30 rounded-full`}
-            source={require('../../Images/logo.png')}
+            source={require('../../Images/deefelz.png')}
           />
         </View>
 
 
         <View style={tw`self-center justify-center mt-5`}>
           <Text style={tw`text-xl text-gray-200`}>
-            {name}
+            {GetData[0]?.selecteduser.fullname}
           </Text>
         </View>
 
@@ -99,9 +75,9 @@ const Profile = ({ navigation }) => {
           <Options text={"Update Profile"} top={1} top1={5} flag={true} left={44}
             onPress={() => {
               navigation.navigate("Updateprofile", {
-               fname : fname,
-               lname : lname,
-               email : email
+                url: GetData[0]?.selecteduser.profilephoto ? GetData[0]?.selecteduser.profilephoto : "https://firebasestorage.googleapis.com/v0/b/supplysync-3e4b1.appspot.com/o/allfiles%2Fimages.jpg?alt=media&token=0aa9155e-5ebd-4b22-8f77-c9d70d280507",
+                pname: GetData[0]?.selecteduser.fullname,
+                pid: GetData[0]?.selecteduser.userid
               })
             }}
           />
@@ -146,7 +122,7 @@ const Profile = ({ navigation }) => {
           />
 
         </View>
-        <Toast/>
+        <Toast />
       </View>
     </View>
   )

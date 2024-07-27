@@ -6,7 +6,7 @@ import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
 const WelcomeScreen = ({ navigation }) => {
   return (
     <View style={styles.container}>
-      <Image source={require('../../Images/logo.png')} style={styles.logo} />
+      <Image source={require('../../Images/deefelz.png')} style={styles.logo} />
       <Text style={styles.title}>METANOIA VR</Text>
       <Text style={styles.subtitle}>Let's get started!</Text>
       <Text style={styles.description}>Login to enjoy the features we’ve provided, and stay healthy!</Text>
@@ -38,7 +38,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 32,
     fontWeight: 'bold',
-    color: '#009688',
+    color: '#0B4064',
     marginBottom: 10,
   },
   subtitle: {
@@ -53,7 +53,7 @@ const styles = StyleSheet.create({
     marginBottom: 40,
   },
   loginButton: {
-    backgroundColor: '#009688',
+    backgroundColor: '#0B4064',
     paddingVertical: 15,
     paddingHorizontal: 80,
     borderRadius: 30,
@@ -65,14 +65,14 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   signUpButton: {
-    borderColor: '#009688',
+    borderColor: '#0B4064',
     borderWidth: 1,
     paddingVertical: 15,
     paddingHorizontal: 80,
     borderRadius: 30,
   },
   signUpButtonText: {
-    color: '#009688',
+    color: '#00B1E7',
     fontSize: 16,
     fontWeight: 'bold',
   },

@@ -16,50 +16,7 @@ const Cbids = ({ navigation }) => {
   const [name, setname] = useState("");
 
 
-  useFocusEffect(
-    React.useCallback(() => {
-        const checkUserRole = async () => {
-           AsyncStorage.getItem("token").then((token)=>{
-            getinfo(token)
-
-           })
-        };
-        checkUserRole();
-        return () => { };
-    }, []) // Empty dependency array ensures this runs only on focus and cleanup on blur
-);
-
-
-  const getinfo = async (token) => {
-
-    try {
-
-      const response = await fetch('https://vr.evolvsolution.com/api/user', {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`, // Replace YOUR_TOKEN_HERE with the actual token
-        },
-      });
-
-      const result = await response.json();
-      if (response.ok) {
-    
-        console.log('Request successful:', result);
-        // navigation.navigate('Subplan')
-        console.log("result :", result.data.subscription);
-        setname(result.data.subscription.name)
-       
-
-      } else {
-   
-        showToast("error", "Error", response.status === 401 ? result.message : result.errors[0], true, 3000);
-      }
-    } catch (error) {
-    
-      showToast("error", "Error", error, true, 3000);
-      console.error('Catch Error:', error);
-    }
-  };
+  
 
 
   return (
@@ -76,7 +33,7 @@ const Cbids = ({ navigation }) => {
 
                 <LottieView
                   style={tw`self-center  w-60 h-60`}
-                  source={require('../../Images/Animation - 1716899497112.json')}
+                  source={require('../../Images/Animation - 1722075556252.json')}
                   autoPlay
                   loop={true}
                   speed={0.5}
@@ -85,16 +42,16 @@ const Cbids = ({ navigation }) => {
 
               <View style={tw` items-center justify-around w-80 h-30 self-center flex-row `}>
                 <View
-                  style={[tw`shadow-xl w-25 h-20 items-center justify-center self-center`, { backgroundColor: '#199A8E' }]}>
-                  <Text style={tw`text-white text-xs`}>Active Plan</Text>
+                  style={[tw`shadow-xl w-30 h-30 items-center justify-center self-center`, { backgroundColor: '#00B1E7' }]}>
+                  <Text style={tw`text-white text-lg font-bold`}>Today Appointment</Text>
 
-                  <Text style={tw`text-lg text-white`}>{name}</Text>
+                  <Text style={tw`text-lg text-white`}>{"10"}</Text>
                 </View>
 
                 <View
-                  style={[tw`shadow-xl bg-blue-500 w-25 h-20  items-center justify-center self-center`, { backgroundColor: '#199A8E' }]}>
-                  <Text style={tw`text-white text-xs`}>Subscription</Text>
-                  <Text style={tw`text-lg text-white`}>{"1 Month"}</Text>
+                  style={[tw`shadow-xl bg-blue-500 w-30 h-30  items-center justify-center self-center`, { backgroundColor: '#00B1E7' }]}>
+                  <Text style={tw`text-white text-lg font-bold`}>My Total {'\n'}Doctors</Text>
+                  <Text style={tw`text-lg text-white`}>{"10"}</Text>
                 </View>
 
                 {/* <View

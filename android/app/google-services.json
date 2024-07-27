@@ -7,9 +7,9 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:673709718349:android:30de7043488d107be99504",
+        "mobilesdk_app_id": "1:673709718349:android:cceaf51454801dbde99504",
         "android_client_info": {
-          "package_name": "com.medics"
+          "package_name": "com.Deefilz"
         }
       },
       "oauth_client": [],
