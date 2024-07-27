@@ -39,7 +39,7 @@ function Tabbar() {
             }}>
             <Tab.Screen
                 options={{
-                    
+
                     tabBarLabel: 'Home',
                     tabBarIcon: ({ focused }) => (
                         <Image style={tw`h-8 w-8`} source={focused ? require("../../Images/homeb.png") : require("../../Images/home.png")} />
@@ -49,9 +49,23 @@ function Tabbar() {
                 component={Home}
             />
 
+
+            <Tab.Screen
+                name="Yourplan"
+                options={{
+
+                    tabBarLabel: 'Appointment',
+                    tabBarIcon: ({ focused }) => (
+                        <Image style={tw`h-8 w-8`} source={focused ? require("../../Images/to-do-listb.png") : require("../../Images/to-do-list.png")} />
+                    ),
+                }}
+                component={Yourplan}
+            />
+
+
             <Tab.Screen
                 options={{
-                   
+
                     tabBarLabel: 'Add Doctor',
                     tabBarIcon: ({ focused }) => (
                         <Image style={tw`h-8 w-8`} source={focused ? require("../../Images/doctorb.png") : require("../../Images/doctor.png")} />
@@ -62,17 +76,7 @@ function Tabbar() {
             />
 
 
-            <Tab.Screen
-                name="Yourplan"
-                options={{
-                   
-                    tabBarLabel: 'Appointment',
-                    tabBarIcon: ({ focused }) => (
-                        <Image style={tw`h-8 w-8`} source={focused ? require("../../Images/to-do-listb.png") : require("../../Images/to-do-list.png")} />
-                    ),
-                }}
-                component={Yourplan}
-            />
+
 
 
 
@@ -80,7 +84,7 @@ function Tabbar() {
                 name="Profile"
                 component={Profile}
                 options={{
-                   
+
                     tabBarLabel: 'Profile',
                     tabBarIcon: ({ focused }) => (
                         <Image style={tw`h-8 w-8`} source={focused ? require("../../Images/userb.png") : require("../../Images/user.png")} />

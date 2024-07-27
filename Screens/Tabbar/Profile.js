@@ -50,9 +50,10 @@ const Profile = ({ navigation }) => {
 
 
 
-        <View style={tw`h-30 w-30 mt-10 items-center justify-center self-center border-black border rounded-full`}>
+        <View style={tw`h-30 w-30 mt-10 items-center justify-center self-center border-black  `}>
           <Image
-            style={tw`h-30 w-30 rounded-full`}
+            style={tw`h-28 w-28 `}
+            resizeMode='contain'
             source={require('../../Images/deefelz.png')}
           />
         </View>
