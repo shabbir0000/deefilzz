@@ -1,4 +1,4 @@
-import { View, Text, Image, TouchableOpacity, Alert } from 'react-native'
+import { View, Text, Image, TouchableOpacity, Alert, Linking } from 'react-native'
 import React, { useEffect, useState } from 'react'
 import tw from "twrnc"
 import Options from '../Universal/Options'
@@ -87,7 +87,13 @@ const Profile = ({ navigation }) => {
               navigation.navigate("PP")
             )}
           />
-          <Options text={"App Version"} top={7} top1={5} flag={false} text1={1.1} logo={false} left={55} />
+
+          <Options text={"Chat With Us"} top={7} top1={5} flag={true} left={51}
+            onPress={() => (
+              Linking.openURL(`whatsapp://send?text=Hello\nI Have Query&phone=${"03342788001"}`)
+            )}
+          />
+          {/* <Options text={"App Version"} top={7} top1={5} flag={false} text1={1.1} logo={false} left={55} /> */}
 
           <Options text={"Logout"} top={7} top1={5} flag={true} logo={false} left={65}
             onPress={() => {

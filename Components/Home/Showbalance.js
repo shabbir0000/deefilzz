@@ -1,4 +1,4 @@
-import { View, Text, Image, Alert } from 'react-native'
+import { View, Text, Image, Alert, TouchableOpacity, Linking } from 'react-native'
 import React, { useEffect, useState } from 'react'
 import tw from "twrnc"
 import LinearGradient from 'react-native-linear-gradient';
@@ -22,7 +22,7 @@ const Showbalance = () => {
 
     useEffect(() => {
         AsyncStorage.getItem("role").then((role) => {
-            if (role === "user" || role === "vendor") {
+            if (role === "user") {
                 setuserflag(true)
             }
             else {
@@ -115,6 +115,16 @@ const Showbalance = () => {
                                 style={tw`text-xl font-bold  text-gray-100`}>
                                 {`Your Family Health`}
                             </Text>
+
+                            <TouchableOpacity 
+                             onPress={() => (
+                                Linking.openURL(`whatsapp://send?text=Hello\nI Have Query&phone=${"03342788001"}`)
+                              )}
+                            >
+                                <View style={[tw` mt-2 w-30 h-7 items-center justify-center rounded-2xl`,{backgroundColor:"#0B4064"}]}>
+                                    <Text style={tw`text-white`}>Chat With Us</Text>
+                                </View>
+                            </TouchableOpacity>
                         </View>
 
 

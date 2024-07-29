@@ -39,12 +39,13 @@ export const Input = ({source, placeholder, onchangetext, onblur, value, entry }
 )
 
 
-export const Input1 = ({ placeholder, onchangetext, onblur, value, entry }) => (
+export const Input1 = ({ placeholder, onchangetext,keyboardType, onblur, value, entry }) => (
     <>
         <View style={tw`flex-row justify-center  mt-3 `}>
             <TextInput
                 placeholder={placeholder}
                 onChangeText={onchangetext}
+                keyboardType={keyboardType}
                 onBlur={onblur}
                 value={value}
                 secureTextEntry={entry}

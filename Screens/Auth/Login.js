@@ -23,7 +23,7 @@ const Login = ({ navigation }) => {
   const [password, setpassword] = useState("")
   const [loading, setloading] = useState(false)
   const [GetData, setGetData] = useState([]);
-
+  // const id =  Deviceinfo.getUniqueId();
   useFocusEffect(
 
     React.useCallback(() => {
@@ -97,6 +97,7 @@ const Login = ({ navigation }) => {
         setloading(false)
         showToast("error", "Error", 'Plzz Enter Valid Email Or Pass', true, 1000)
       }
+     
     }
   };
 
@@ -191,6 +192,7 @@ const Login = ({ navigation }) => {
                   onPress={() => {
                     // navigation.navigate('Subplan')
                     loginwithemailandpass()
+
                   }}
                   c1={'#0B4064'}
                   c2={'#0B4064'}

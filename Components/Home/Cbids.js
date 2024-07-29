@@ -6,6 +6,8 @@ import LinearGradient from 'react-native-linear-gradient';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { showToast } from '../../Screens/Universal/Input';
 import { useFocusEffect } from '@react-navigation/native';
+import { collection, limit, onSnapshot, query } from 'firebase/firestore';
+import { db } from '../../Firebase';
 
 
 const Cbids = ({ navigation }) => {
@@ -14,9 +16,38 @@ const Cbids = ({ navigation }) => {
   const width = Dimensions.get('window').width;
   const height = Dimensions.get('window').height;
   const [name, setname] = useState("");
+  const [GetData, setGetData] = useState([]);
+
+  useEffect(() => {
+    AsyncStorage.getItem("role").then((role) => {
+      if (role === "user") {
+        setuserflag(true)
+      }
+      else {
+        setuserflag(false)
+      }
+    })
+  }, [])
 
 
-  
+  useEffect(() => {
+
+    AsyncStorage.getItem("email").then((email) => {
+      const coll = collection(db, 'Doctors');
+      const q = query(coll, limit(4));
+
+      const unSubscribe = onSnapshot(q, snapshot => {
+        setGetData(
+          snapshot.docs.map(doc => ({
+            selecteduser: doc.data(),
+          })),
+        );
+      });
+      return () => {
+        unSubscribe();
+      };
+    })
+  }, []);
 
 
   return (
@@ -26,7 +57,43 @@ const Cbids = ({ navigation }) => {
           <ActivityIndicator style={{ flex: 1, alignItems: 'center', alignSelf: 'center', justifyContent: 'center' }} size={'large'} />
           :
           userflag ?
-            <></>
+            <>
+              <View style={tw` h-7 w-80 mt-15 self-center flex-row justify-between items-center`}>
+                <Text style={tw`text-base font-bold`}>Top Doctors</Text>
+                <TouchableOpacity
+                  onPress={() => {
+                    navigation.navigate('Yourplan')
+                  }}
+                >
+                  <Text style={tw`text-base text-green-500 font-semibold`}>See All</Text>
+                </TouchableOpacity>
+              </View>
+
+
+              <View style={tw`h-60 w-90 justify-center rounded-md`}>
+                <ScrollView showsHorizontalScrollIndicator={false} horizontal={true}>
+                  {
+                    GetData.map((data,index) => (
+                      <View key={index} style={tw`border ml-3 mr-3 border-gray-300 h-50 w-45 self-center items-center justify-center mt-5 rounded-md`}>
+                        <Image
+                          style={tw`border h-25 w-25 rounded-full`}
+                          source={{uri: data.selecteduser.profile}}
+                        />
+                        <Text style={tw`text-base font-bold`}>{data.selecteduser.doctorname}</Text>
+                        <Text style={tw`text-base font-light`}>{data.selecteduser.doctortypelabel}</Text>
+                        <Text style={tw`text-base font-light`}>{data.selecteduser.doctortimefromlabel} To {data.selecteduser.doctortimetolabel}</Text>
+                      </View>
+                    ))
+                  }
+
+
+
+
+
+                </ScrollView>
+              </View>
+
+            </>
             :
             <View style={tw` w-80 self-center mt-10 h-190`}>
               <View style={tw`mt-10 h-70 w-80 border-black items-center self-center `}>

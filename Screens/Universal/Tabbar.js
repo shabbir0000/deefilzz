@@ -64,6 +64,33 @@ function Tabbar() {
 
 
             <Tab.Screen
+                listeners={({ navigation }) => ({
+                    tabPress: (e) => {
+                        // Prevent default behavior
+                        e.preventDefault();
+
+                        // Generate a new key to force re-render
+                        navigation.navigate('Sessions', {
+                            doctorname: "",
+                            doctortype: "",
+                            doctorphone: "",
+                            mondayy: false,
+                            tuesdayy: false,
+                            wednesdayy: false,
+                            thursdayy: false,
+                            fridayy: false,
+                            saturdayy: false,
+                            sundayy: false,
+                            docid: "",
+                            doctortimefrom: "",
+                            doctortimeto: "",
+                            labell: "",
+                            labell1: "",
+                            labell2: "",
+                            profile: "https://firebasestorage.googleapis.com/v0/b/supplysync-3e4b1.appspot.com/o/allfiles%2Fimages.jpg?alt=media&token=0aa9155e-5ebd-4b22-8f77-c9d70d280507"
+                        });
+                    },
+                })}
                 options={{
 
                     tabBarLabel: 'Add Doctor',
