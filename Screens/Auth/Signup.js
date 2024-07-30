@@ -24,12 +24,13 @@ const Signup = ({ navigation }) => {
   const [loading, setloading] = useState(false)
   const [name, setname] = useState("")
   const [email, setemail] = useState("")
+  const [phone, setphone] = useState("")
   const [password, setpassword] = useState("")
   const userid = uuid.v4();
 
 
   const Signinwithemailandpass = async () => {
-    if (!email || !password || !name) {
+    if (!email || !password || !name || !phone) {
       showToast("error", "Field Required", "Must Fill All The Field", true, 1000)
     }
 
@@ -41,6 +42,7 @@ const Signup = ({ navigation }) => {
 
           setDoc(doc(db, 'Signup', userid), {
             fullname: name,
+            phone : phone,
             role: 'user',
             email: email.toLowerCase(),
             password,
@@ -52,6 +54,7 @@ const Signup = ({ navigation }) => {
 
               setDoc(doc(db, 'Profile', userid), {
                 fullname: name,
+                phone : phone,
                 email: email.toLowerCase(),
                 profilephoto: '',
                 role: 'user',
@@ -115,7 +118,13 @@ const Signup = ({ navigation }) => {
             placeholder={"Your Full Name"}
           />
 
-          
+          <Input
+            onchangetext={setphone}
+            entry={true}
+            source={require("../../Images/smartphone.png")}
+            placeholder={"Enter Your Phone Number"}
+          />
+
 
           <Input
             onchangetext={setemail}

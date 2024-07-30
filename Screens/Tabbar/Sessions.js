@@ -19,11 +19,15 @@ import Screensheader from '../../Screens/Universal//Screensheader';
 import storage from '@react-native-firebase/storage';
 import { ref1, app, db } from '../../Firebase';
 import {
+    collection,
     deleteDoc,
     doc,
+    onSnapshot,
+    query,
     serverTimestamp,
     setDoc,
     updateDoc,
+    where,
 } from 'firebase/firestore';
 
 import FilePicker from 'react-native-document-picker';
@@ -78,6 +82,7 @@ const Sessions = ({ navigation, route }) => {
     const [saturday, setsaturday] = useState(saturdayy)
     const [sunday, setsunday] = useState(sundayy)
     const [loading1, setloading1] = useState(true);
+    const [userflag, setuserflag] = useState("");
 
     const [value, setValue] = useState(doctortimefrom);
     const [label, setlabel] = useState(labell);
@@ -91,8 +96,13 @@ const Sessions = ({ navigation, route }) => {
     const [value2, setValue2] = useState(doctortype);
     const [label2, setlabel2] = useState(labell2);
     const [isFocus2, setIsFocus2] = useState(false);
+    const [GetData, setGetData] = useState([])
 
     const userid = uuid.v4();
+    const datee = new Date()
+    const showdate = datee.getFullYear() + "/" + (datee.getMonth() + 1) + "/" + datee.getDate();
+
+    const [cat, setcat] = useState("Today")
 
     const data = [
 
@@ -162,11 +172,63 @@ const Sessions = ({ navigation, route }) => {
                 console.log("email :", email);
                 setuser(email);
             });
+
+            AsyncStorage.getItem("role").then((role) => {
+                if (role === "user") {
+                    setuserflag(true)
+                }
+                else {
+                    setuserflag(false)
+                }
+            })
+
             return () => {
 
             };
         }, []),
     );
+
+    useEffect(() => {
+        showtodayappointment()
+
+    }, []);
+
+
+    const showtodayappointment = async () => {
+        AsyncStorage.getItem("email").then((email) => {
+            const coll = collection(db, 'Appointment');
+            const q = query(coll, where('email', '==', email), where('bookdate', '==', showdate));
+
+            const unSubscribe = onSnapshot(q, snapshot => {
+                setGetData(
+                    snapshot.docs.map(doc => ({
+                        selecteduser: doc.data(),
+                    })),
+                );
+            });
+            return () => {
+                unSubscribe();
+            };
+        })
+    }
+
+    const showallappointment = async () => {
+        AsyncStorage.getItem("email").then((email) => {
+            const coll = collection(db, 'Appointment');
+            const q = query(coll, where('email', '==', email));
+
+            const unSubscribe = onSnapshot(q, snapshot => {
+                setGetData(
+                    snapshot.docs.map(doc => ({
+                        selecteduser: doc.data(),
+                    })),
+                );
+            });
+            return () => {
+                unSubscribe();
+            };
+        })
+    }
 
 
     useEffect(() => {
@@ -373,7 +435,18 @@ const Sessions = ({ navigation, route }) => {
             });
     };
 
-  
+    const vrImages = [
+        {
+            url: "https://vection-cms-prod.s3.eu-central-1.amazonaws.com/Adobe_Stock_506941973_cc825880a8.jpeg",
+            text: "Today"
+        },
+        {
+            url: "https://images.inc.com/uploaded_files/image/1920x1080/getty_921019710_413686.jpg",
+            text: "All"
+        },
+
+    ];
+
 
     return (
         <>
@@ -387,311 +460,411 @@ const Sessions = ({ navigation, route }) => {
                     />
                     :
                     <>
-                        <View style={[tw`flex-1 flex`, { backgroundColor: '#FFFFFF' }]}>
-                            <>
-                                <Formik
-                                    enableReinitialize
-                                    initialValues={initialValues}
-                                    validationSchema={Validation}
-                                    onSubmit={(values, { resetForm }) => {
+                        {
+                            userflag ?
+                                <>
+                                    <View style={tw` bg-white flex-1`}>
+                                        <Screensheader
+                                            name={'MY APPOINMENTS'}
+                                            left={10}
+                                            onPress={() => navigation.goBack()}
+                                        />
 
-                                        if (docid) {
-                                            updatedocfile(
-                                                values.doctorname,
-                                                values.doctorphone
-                                            )
-                                        } else {
-                                            uploaddocfile(
-                                                values.doctorname,
-                                                values.doctorphone
-                                            )
-                                        }
-                                        // resetForm({})
+                                        <View
+                                            style={tw`w-85 h-12   flex-row  self-center  items-center`}>
+                                            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                                                {/* card 1 */}
+
+                                                <>
 
 
-                                    }}>
-                                    {({
-                                        handleChange,
-                                        handleBlur,
-                                        handleSubmit,
-                                        errors,
-                                        touched,
-                                        values,
-                                        isValid,
-                                    }) => (
-                                        <SafeAreaView>
-                                            <ScrollView vertical showsVerticalScrollIndicator={true}>
-                                                <View style={tw`h-220`}>
-                                                    <Screensheader
-                                                        name={'ADD DOCTOR'}
-                                                        left={15}
-                                                        onPress={() => navigation.goBack()}
-                                                    />
+                                                    {vrImages?.map((item, index) => (
+                                                        <TouchableOpacity
+                                                            key={index}
+                                                            onPress={() => {
+                                                                // setloading(true)
+                                                                // getcatvideo(item.id)
 
+                                                                if (item.text === "All") {
+                                                                    showallappointment()
+                                                                    setcat(item.text)
+                                                                } else {
+                                                                    showtodayappointment()
+                                                                    setcat(item.text)
+                                                                }
 
-
-                                                    <View
-                                                        style={tw`flex flex-col w-80 self-center justify-around`}>
-                                                        <TouchableOpacity onPress={() => choosefileimg()}>
-                                                            <View
-                                                                style={tw`flex w-80  items-center  mt-5 flex-col`}>
-                                                                <View
-                                                                    style={tw`  h-30 border-2 rounded-full w-30 items-center border-dotted`}>
-
-                                                                    <Image
-                                                                        source={{ uri: filedata1 }}
-                                                                        resizeMode='cover'
-                                                                        style={tw` w-29 h-29 rounded-full`}
-                                                                    />
-
-                                                                </View>
-                                                                <View style={tw`mt-2 items-center`}>
-                                                                    <Text style={tw`font-bold  `}>
-                                                                        Add Profile Image
-                                                                    </Text>
-                                                                    <Text style={tw`text-xs  `}>Max 5mb</Text>
-                                                                </View>
+                                                            }}>
+                                                            <View style={[tw`bg-${cat === item.text ? 'blue-400' : 'white'} h-10 w-30 ml-10 border flex-row items-center justify-evenly rounded-3xl`, { borderRadius: 50, borderColor: '#00B1E7' }]}>
+                                                                <Image style={tw`h-5 w-5 rounded-full`} source={{ uri: item.url }} />
+                                                                <Text numberOfLines={1} style={tw`text-center text-${cat === item.text ? "white" : "black"} w-18`}>{item.text}</Text>
                                                             </View>
                                                         </TouchableOpacity>
-                                                    </View>
 
-                                                    <View style={tw` self-center  h-70`}>
-                                                        <View style={tw`top-5`}>
-                                                            <Input1
-                                                                placeholder="Add Doctor Name"
-                                                                onchangetext={handleChange('doctorname')}
-                                                                onblur={handleBlur('doctorname')}
-                                                                value={values.doctorname}
-                                                                error={touched.doctorname ? errors.doctorname : false}
-                                                            />
-                                                        </View>
+                                                    ))
+                                                    }
+                                                </>
 
 
-                                                        <View style={tw`top-8`}>
-                                                            <Text style={tw`text-gray-400 `}>Select Doctor Type</Text>
-                                                            <Dropdown
-                                                                style={[tw`h-12 w-80   bg-gray-100 rounded-md`, { backgroundColor: "#EEEEEE" }]}
-                                                                placeholderStyle={tw`ml-3 text-gray-400 text-xs `}
-                                                                selectedTextStyle={tw`ml-3 text-gray-400  `}
-                                                                containerStyle={tw`h-80 w-80  mt-7 bg-gray-100 rounded-md`}
+                                            </ScrollView>
+                                        </View>
 
-                                                                data={data2}
-                                                                maxHeight={300}
-                                                                labelField="label"
-                                                                valueField="value"
-                                                                placeholder={'Select Doctor Typpe'}
-                                                                mode='modal'
+                                        <ScrollView style={tw`flex-1 mb-5 self-center `} showsVerticalScrollIndicator={false}>
 
-                                                                value={value2}
-                                                                onFocus={() => setIsFocus2(true)}
-                                                                onBlur={() => setIsFocus2(false)}
-                                                                onChange={item => {
-                                                                    console.log("time", item.label);
-                                                                    setlabel2(item.label)
-                                                                    setValue2(item.value);
-                                                                    setIsFocus2(false);
-                                                                }}
-
-                                                            />
-                                                        </View>
-
-                                                        {/* 
-                                              <View style={tw`top-5`}>
-                                                  <Input1
-                                                      placeholder="Add Doctor Email"
-                                                      onchangetext={handleChange('name')}
-                                                      onblur={handleBlur('name')}
-                                                      value={values.name}
-                                                      error={touched.name ? errors.name : false}
-                                                  />
-                                              </View> */}
+                                            {
+                                                GetData.map((data, index) => (
+                                                    <TouchableOpacity
+                                                        disabled={true}
+                                                        key={index}
+                                                    >
+                                                        <View style={[tw`border flex-col justify-center  items-center w-80 h-45 rounded-md self-center mt-5`, { borderColor: "#00B1E7" }]}>
 
 
-                                                        <View style={tw`top-8`}>
-                                                            <Input1
-                                                                placeholder="Add Doctor Phone"
-                                                                keyboardType={"number-pad"}
-                                                                onchangetext={handleChange('doctorphone')}
-                                                                onblur={handleBlur('doctorphone')}
-                                                                value={values.doctorphone}
-
-                                                                error={touched.doctorphone ? errors.doctorphone : false}
-                                                            />
-                                                        </View>
+                                                            <View key={index} style={[tw` flex-row justify-around  items-center  w-80 h-35  self-center `]}>
 
 
-                                                        <View style={tw` justify-start  items-center flex-col w-80 h-25 mt-10`}>
-                                                            <Text style={tw`text-gray-700 font-bold text-lg `}>Add Doctor Days</Text>
-
-                                                            <View style={tw` flex-row items-center justify-center w-70 h-10  `}>
-
-                                                                <CheckBox
-                                                                    disabled={false}
-                                                                    value={monday}
-                                                                    onValueChange={(newValue) => setmonday(newValue)}
+                                                                <Image
+                                                                    style={tw`h-30 w-35  rounded-md`}
+                                                                    resizeMode='cover'
+                                                                    source={{ uri: data.selecteduser.profile }}
                                                                 />
-                                                                <Text style={tw`text-gray-400 `}>Monday</Text>
-
-                                                                <CheckBox
-                                                                    disabled={false}
-                                                                    value={tuesday}
-                                                                    onValueChange={(newValue) => settuesday(newValue)}
-                                                                />
-                                                                <Text style={tw`text-gray-400 `}>Tuesday</Text>
+                                                                <View style={tw`w-40 h-30 justify-start  items-start `}>
 
 
-                                                                <CheckBox
-                                                                    disabled={false}
-                                                                    value={wednesday}
-                                                                    onValueChange={(newValue) => setwednesday(newValue)}
-                                                                />
-                                                                <Text style={tw`text-gray-400 `}>Wednesday</Text>
+                                                                    <Text numberOfLines={1} style={tw`font-bold w-30 text-xl`}>{data.selecteduser.doctorname}</Text>
+                                                                    <Text numberOfLines={1} style={tw`font-light mt-2 w-30 text-gray-400 text-base`}>{data.selecteduser.doctortypelabel}</Text>
 
-
-
-                                                            </View>
-
-                                                            <View style={tw` flex-row items-center justify-center w-80  h-10  `}>
-
-                                                                <CheckBox
-                                                                    disabled={false}
-                                                                    value={thursday}
-                                                                    onValueChange={(newValue) => setthursday(newValue)}
-                                                                />
-                                                                <Text style={tw`text-gray-400 `}>Thursday</Text>
-
-                                                                <CheckBox
-                                                                    disabled={false}
-                                                                    value={friday}
-                                                                    onValueChange={(newValue) => setfriday(newValue)}
-                                                                />
-                                                                <Text style={tw`text-gray-400 `}>Friday</Text>
-
-
-                                                                <CheckBox
-                                                                    disabled={false}
-                                                                    value={saturday}
-                                                                    onValueChange={(newValue) => setsaturday(newValue)}
-                                                                />
-                                                                <Text style={tw`text-gray-400 `}>Saturday</Text>
-
-                                                                <CheckBox
-                                                                    disabled={false}
-                                                                    value={sunday}
-                                                                    onValueChange={(newValue) => setsunday(newValue)}
-                                                                />
-                                                                <Text style={tw`text-gray-400 `}>Sunday</Text>
-
-
-
-                                                            </View>
-
-
-
-                                                        </View>
-
-
-
-                                                        <View style={tw`top-8`}>
-                                                            <Text style={tw`text-gray-400 `}>Select Time From</Text>
-                                                            <Dropdown
-                                                                style={[tw`h-12 w-80   bg-gray-100 rounded-md`, { backgroundColor: "#EEEEEE" }]}
-                                                                placeholderStyle={tw`ml-3 text-gray-400 text-xs `}
-                                                                selectedTextStyle={tw`ml-3 text-gray-400  `}
-                                                                containerStyle={tw`h-80 w-80  mt-7 bg-gray-100 rounded-md`}
-
-                                                                data={data}
-                                                                maxHeight={300}
-                                                                labelField="label"
-                                                                valueField="value"
-                                                                placeholder={'Select Doctor Time From'}
-                                                                mode='modal'
-
-                                                                value={value}
-                                                                onFocus={() => setIsFocus(true)}
-                                                                onBlur={() => setIsFocus(false)}
-                                                                onChange={item => {
-                                                                    setValue(item.value);
-                                                                    setlabel(item.label)
-                                                                    setIsFocus(false);
-                                                                }}
-
-                                                            />
-                                                        </View>
-
-
-
-                                                        <View style={tw`top-10`}>
-                                                            <Text style={tw`text-gray-400 `}>Select Time To</Text>
-                                                            <Dropdown
-                                                                style={[tw`h-12 w-80   bg-gray-100 rounded-md`, { backgroundColor: "#EEEEEE" }]}
-                                                                placeholderStyle={tw`ml-3 text-gray-400 text-xs `}
-                                                                selectedTextStyle={tw`ml-3 text-gray-400  `}
-                                                                containerStyle={tw`h-80 w-80  mt-7 bg-gray-100 rounded-md`}
-
-                                                                data={data1}
-                                                                maxHeight={300}
-                                                                labelField="label"
-                                                                valueField="value"
-                                                                placeholder={'Select Doctor Time To'}
-                                                                mode='modal'
-
-                                                                value={value1}
-                                                                onFocus={() => setIsFocus1(true)}
-                                                                onBlur={() => setIsFocus1(false)}
-                                                                onChange={item => {
-                                                                    setValue1(item.value);
-                                                                    setlabel1(item.label)
-                                                                    setIsFocus1(false);
-                                                                }}
-
-                                                            />
-                                                        </View>
-
-
-
-
-
-                                                        {
-                                                            loading ?
-                                                                <ActivityIndicator
-                                                                    style={tw`mt-15 `}
-                                                                    size="large"
-                                                                    color="#199A8E"
-                                                                />
-                                                                :
-                                                                <View style={tw`mt-15`}>
-                                                                    <Buttonnormal
-                                                                        onPress={handleSubmit}
-                                                                        // onPress={() => {
-                                                                        //     console.log(monday);
-                                                                        //     console.log(tuesday);
-                                                                        //     console.log(wednesday);
-                                                                        //     console.log(thursday);
-                                                                        //     console.log(friday);
-                                                                        //     console.log(saturday);
-                                                                        //     console.log(sunday);
-                                                                        // }}
-                                                                        c1={'#0B4064'}
-                                                                        c2={'#0B4064'}
-                                                                        style={tw`text-white`}
-                                                                        title={docid ? "UPDATE DOCTOR" : "ADD DOCTOR"}
-                                                                    />
+                                                                    <Text numberOfLines={1} style={tw`font-medium mt-2  w-30 text-gray-400 text-base`}>From {data.selecteduser.doctortimefromlabel}</Text>
+                                                                    <Text numberOfLines={1} style={tw`font-medium mt-2  w-30 text-gray-400 text-base`}>To {data.selecteduser.doctortimetolabel}</Text>
                                                                 </View>
 
-                                                        }
+
+                                                            </View>
+
+                                                            <View style={tw`h-10  justify-around items-start flex-row w-75`}>
+                                                                <Text numberOfLines={1} style={tw`font-normal  text-base`}>{data.selecteduser.bookdate}</Text>
+                                                                <Text numberOfLines={1} style={tw`font-normal   text-sm`}>{data.selecteduser.booktime}</Text>
+                                                                <Text numberOfLines={1} style={tw`font-normal text-green-500   text-base`}>{data.selecteduser.status.toUpperCase()}</Text>
+
+
+                                                            </View>
+                                                            {/* <TouchableOpacity>
+                                                        <View style={tw` rounded-md bg-slate-200 w-70 items-center justify-center h-10 mt-5 `}>
+
+                                                            <Text>
+                                                                CANCEL
+                                                            </Text>
+
+                                                        </View>
+                                                    </TouchableOpacity> */}
+                                                        </View>
+                                                    </TouchableOpacity>
+                                                ))
+                                            }
+
+
+                                        </ScrollView>
+                                    </View>
+                                </>
+                                :
+                                <>
+                                    <View style={[tw`flex-1 flex`, { backgroundColor: '#FFFFFF' }]}>
+                                        <>
+                                            <Formik
+                                                enableReinitialize
+                                                initialValues={initialValues}
+                                                validationSchema={Validation}
+                                                onSubmit={(values, { resetForm }) => {
+
+                                                    if (docid) {
+                                                        updatedocfile(
+                                                            values.doctorname,
+                                                            values.doctorphone
+                                                        )
+                                                    } else {
+                                                        uploaddocfile(
+                                                            values.doctorname,
+                                                            values.doctorphone
+                                                        )
+                                                    }
+                                                    // resetForm({})
+
+
+                                                }}>
+                                                {({
+                                                    handleChange,
+                                                    handleBlur,
+                                                    handleSubmit,
+                                                    errors,
+                                                    touched,
+                                                    values,
+                                                    isValid,
+                                                }) => (
+                                                    <SafeAreaView>
+                                                        <ScrollView vertical showsVerticalScrollIndicator={true}>
+                                                            <View style={tw`h-220`}>
+                                                                <Screensheader
+                                                                    name={'ADD DOCTOR'}
+                                                                    left={15}
+                                                                    onPress={() => navigation.goBack()}
+                                                                />
 
 
 
-                                                    </View>
-                                                </View>
-                                            </ScrollView>
-                                        </SafeAreaView>
-                                    )}
-                                </Formik>
-                            </>
-                        </View >
-                        <Toast />
+                                                                <View
+                                                                    style={tw`flex flex-col w-80 self-center justify-around`}>
+                                                                    <TouchableOpacity onPress={() => choosefileimg()}>
+                                                                        <View
+                                                                            style={tw`flex w-80  items-center  mt-5 flex-col`}>
+                                                                            <View
+                                                                                style={tw`  h-30 border-2 rounded-full w-30 items-center border-dotted`}>
+
+                                                                                <Image
+                                                                                    source={{ uri: filedata1 }}
+                                                                                    resizeMode='cover'
+                                                                                    style={tw` w-29 h-29 rounded-full`}
+                                                                                />
+
+                                                                            </View>
+                                                                            <View style={tw`mt-2 items-center`}>
+                                                                                <Text style={tw`font-bold  `}>
+                                                                                    Add Profile Image
+                                                                                </Text>
+                                                                                <Text style={tw`text-xs  `}>Max 5mb</Text>
+                                                                            </View>
+                                                                        </View>
+                                                                    </TouchableOpacity>
+                                                                </View>
+
+                                                                <View style={tw` self-center  h-70`}>
+                                                                    <View style={tw`top-5`}>
+                                                                        <Input1
+                                                                            placeholder="Add Doctor Name"
+                                                                            onchangetext={handleChange('doctorname')}
+                                                                            onblur={handleBlur('doctorname')}
+                                                                            value={values.doctorname}
+                                                                            error={touched.doctorname ? errors.doctorname : false}
+                                                                        />
+                                                                    </View>
+
+
+                                                                    <View style={tw`top-8`}>
+                                                                        <Text style={tw`text-gray-400 `}>Select Doctor Type</Text>
+                                                                        <Dropdown
+                                                                            style={[tw`h-12 w-80   bg-gray-100 rounded-md`, { backgroundColor: "#EEEEEE" }]}
+                                                                            placeholderStyle={tw`ml-3 text-gray-400 text-xs `}
+                                                                            selectedTextStyle={tw`ml-3 text-gray-400  `}
+                                                                            containerStyle={tw`h-80 w-80  mt-7 bg-gray-100 rounded-md`}
+
+                                                                            data={data2}
+                                                                            maxHeight={300}
+                                                                            labelField="label"
+                                                                            valueField="value"
+                                                                            placeholder={'Select Doctor Typpe'}
+                                                                            mode='modal'
+
+                                                                            value={value2}
+                                                                            onFocus={() => setIsFocus2(true)}
+                                                                            onBlur={() => setIsFocus2(false)}
+                                                                            onChange={item => {
+                                                                                console.log("time", item.label);
+                                                                                setlabel2(item.label)
+                                                                                setValue2(item.value);
+                                                                                setIsFocus2(false);
+                                                                            }}
+
+                                                                        />
+                                                                    </View>
+
+
+
+                                                                    <View style={tw`top-8`}>
+                                                                        <Input1
+                                                                            placeholder="Add Doctor Phone"
+                                                                            keyboardType={"number-pad"}
+                                                                            onchangetext={handleChange('doctorphone')}
+                                                                            onblur={handleBlur('doctorphone')}
+                                                                            value={values.doctorphone}
+
+                                                                            error={touched.doctorphone ? errors.doctorphone : false}
+                                                                        />
+                                                                    </View>
+
+
+                                                                    <View style={tw` justify-start  items-center flex-col w-80 h-25 mt-10`}>
+                                                                        <Text style={tw`text-gray-700 font-bold text-lg `}>Add Doctor Days</Text>
+
+                                                                        <View style={tw` flex-row items-center justify-center w-70 h-10  `}>
+
+                                                                            <CheckBox
+                                                                                disabled={false}
+                                                                                value={monday}
+                                                                                onValueChange={(newValue) => setmonday(newValue)}
+                                                                            />
+                                                                            <Text style={tw`text-gray-400 `}>Monday</Text>
+
+                                                                            <CheckBox
+                                                                                disabled={false}
+                                                                                value={tuesday}
+                                                                                onValueChange={(newValue) => settuesday(newValue)}
+                                                                            />
+                                                                            <Text style={tw`text-gray-400 `}>Tuesday</Text>
+
+
+                                                                            <CheckBox
+                                                                                disabled={false}
+                                                                                value={wednesday}
+                                                                                onValueChange={(newValue) => setwednesday(newValue)}
+                                                                            />
+                                                                            <Text style={tw`text-gray-400 `}>Wednesday</Text>
+
+
+
+                                                                        </View>
+
+                                                                        <View style={tw` flex-row items-center justify-center w-80  h-10  `}>
+
+                                                                            <CheckBox
+                                                                                disabled={false}
+                                                                                value={thursday}
+                                                                                onValueChange={(newValue) => setthursday(newValue)}
+                                                                            />
+                                                                            <Text style={tw`text-gray-400 `}>Thursday</Text>
+
+                                                                            <CheckBox
+                                                                                disabled={false}
+                                                                                value={friday}
+                                                                                onValueChange={(newValue) => setfriday(newValue)}
+                                                                            />
+                                                                            <Text style={tw`text-gray-400 `}>Friday</Text>
+
+
+                                                                            <CheckBox
+                                                                                disabled={false}
+                                                                                value={saturday}
+                                                                                onValueChange={(newValue) => setsaturday(newValue)}
+                                                                            />
+                                                                            <Text style={tw`text-gray-400 `}>Saturday</Text>
+
+                                                                            <CheckBox
+                                                                                disabled={false}
+                                                                                value={sunday}
+                                                                                onValueChange={(newValue) => setsunday(newValue)}
+                                                                            />
+                                                                            <Text style={tw`text-gray-400 `}>Sunday</Text>
+
+
+
+                                                                        </View>
+
+
+
+                                                                    </View>
+
+
+
+                                                                    <View style={tw`top-8`}>
+                                                                        <Text style={tw`text-gray-400 `}>Select Time From</Text>
+                                                                        <Dropdown
+                                                                            style={[tw`h-12 w-80   bg-gray-100 rounded-md`, { backgroundColor: "#EEEEEE" }]}
+                                                                            placeholderStyle={tw`ml-3 text-gray-400 text-xs `}
+                                                                            selectedTextStyle={tw`ml-3 text-gray-400  `}
+                                                                            containerStyle={tw`h-80 w-80  mt-7 bg-gray-100 rounded-md`}
+
+                                                                            data={data}
+                                                                            maxHeight={300}
+                                                                            labelField="label"
+                                                                            valueField="value"
+                                                                            placeholder={'Select Doctor Time From'}
+                                                                            mode='modal'
+
+                                                                            value={value}
+                                                                            onFocus={() => setIsFocus(true)}
+                                                                            onBlur={() => setIsFocus(false)}
+                                                                            onChange={item => {
+                                                                                setValue(item.value);
+                                                                                setlabel(item.label)
+                                                                                setIsFocus(false);
+                                                                            }}
+
+                                                                        />
+                                                                    </View>
+
+
+
+                                                                    <View style={tw`top-10`}>
+                                                                        <Text style={tw`text-gray-400 `}>Select Time To</Text>
+                                                                        <Dropdown
+                                                                            style={[tw`h-12 w-80   bg-gray-100 rounded-md`, { backgroundColor: "#EEEEEE" }]}
+                                                                            placeholderStyle={tw`ml-3 text-gray-400 text-xs `}
+                                                                            selectedTextStyle={tw`ml-3 text-gray-400  `}
+                                                                            containerStyle={tw`h-80 w-80  mt-7 bg-gray-100 rounded-md`}
+
+                                                                            data={data1}
+                                                                            maxHeight={300}
+                                                                            labelField="label"
+                                                                            valueField="value"
+                                                                            placeholder={'Select Doctor Time To'}
+                                                                            mode='modal'
+
+                                                                            value={value1}
+                                                                            onFocus={() => setIsFocus1(true)}
+                                                                            onBlur={() => setIsFocus1(false)}
+                                                                            onChange={item => {
+                                                                                setValue1(item.value);
+                                                                                setlabel1(item.label)
+                                                                                setIsFocus1(false);
+                                                                            }}
+
+                                                                        />
+                                                                    </View>
+
+
+
+
+
+                                                                    {
+                                                                        loading ?
+                                                                            <ActivityIndicator
+                                                                                style={tw`mt-15 `}
+                                                                                size="large"
+                                                                                color="#199A8E"
+                                                                            />
+                                                                            :
+                                                                            <View style={tw`mt-15`}>
+                                                                                <Buttonnormal
+                                                                                    onPress={handleSubmit}
+                                                                                    // onPress={() => {
+                                                                                    //     console.log(monday);
+                                                                                    //     console.log(tuesday);
+                                                                                    //     console.log(wednesday);
+                                                                                    //     console.log(thursday);
+                                                                                    //     console.log(friday);
+                                                                                    //     console.log(saturday);
+                                                                                    //     console.log(sunday);
+                                                                                    // }}
+                                                                                    c1={'#0B4064'}
+                                                                                    c2={'#0B4064'}
+                                                                                    style={tw`text-white`}
+                                                                                    title={docid ? "UPDATE DOCTOR" : "ADD DOCTOR"}
+                                                                                />
+                                                                            </View>
+
+                                                                    }
+
+
+
+                                                                </View>
+                                                            </View>
+                                                        </ScrollView>
+                                                    </SafeAreaView>
+                                                )}
+                                            </Formik>
+                                        </>
+                                    </View >
+                                    <Toast />
+                                </>
+                        }
+
                     </>
             }
         </>

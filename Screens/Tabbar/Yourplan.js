@@ -317,7 +317,9 @@ const Yourplan = ({ navigation }) => {
                                         <TouchableOpacity
                                             key={index}
                                             onPress={() => {
-                                                navigation.navigate("Showappoinments")
+                                                navigation.navigate("Showappoinments",{
+                                                    phone : data.selecteduser.doctorphone
+                                                })
                                             }}
                                         >
                                             <View style={[tw`border flex-row justify-around items-center w-80 h-40 rounded-md self-center mt-5`, { borderColor: "#00B1E7" }]}>

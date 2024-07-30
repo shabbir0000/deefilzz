@@ -6,7 +6,7 @@ import LinearGradient from 'react-native-linear-gradient';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { showToast } from '../../Screens/Universal/Input';
 import { useFocusEffect } from '@react-navigation/native';
-import { collection, limit, onSnapshot, query } from 'firebase/firestore';
+import { collection, limit, onSnapshot, query, where } from 'firebase/firestore';
 import { db } from '../../Firebase';
 
 
@@ -17,6 +17,11 @@ const Cbids = ({ navigation }) => {
   const height = Dimensions.get('window').height;
   const [name, setname] = useState("");
   const [GetData, setGetData] = useState([]);
+  const [GetData1, setGetData1] = useState([]);
+  const [GetData2, setGetData2] = useState([]);
+  const datee = new Date()
+  const showdate = datee.getFullYear() + "/" + (datee.getMonth() + 1) + "/" + datee.getDate();
+
 
   useEffect(() => {
     AsyncStorage.getItem("role").then((role) => {
@@ -50,6 +55,47 @@ const Cbids = ({ navigation }) => {
   }, []);
 
 
+  useEffect(() => {
+
+    AsyncStorage.getItem("email").then((email) => {
+      const coll = collection(db, 'Appointment');
+      const q = query(coll, where("bookdate", '==',showdate));
+
+      const unSubscribe = onSnapshot(q, snapshot => {
+        setGetData1(
+          snapshot.docs.map(doc => ({
+            selecteduser: doc.data(),
+          })),
+        );
+      });
+      return () => {
+        unSubscribe();
+      };
+    })
+  }, []);
+
+
+  useEffect(() => {
+
+    AsyncStorage.getItem("email").then((email) => {
+      const coll = collection(db, 'Doctors');
+      // const q = query(coll, limit(4));
+
+      const unSubscribe = onSnapshot(coll, snapshot => {
+        setGetData2(
+          snapshot.docs.map(doc => ({
+            selecteduser: doc.data(),
+          })),
+        );
+      });
+      return () => {
+        unSubscribe();
+      };
+    })
+  }, []);
+
+
+
   return (
     <>
       {
@@ -73,16 +119,24 @@ const Cbids = ({ navigation }) => {
               <View style={tw`h-60 w-90 justify-center rounded-md`}>
                 <ScrollView showsHorizontalScrollIndicator={false} horizontal={true}>
                   {
-                    GetData.map((data,index) => (
-                      <View key={index} style={tw`border ml-3 mr-3 border-gray-300 h-50 w-45 self-center items-center justify-center mt-5 rounded-md`}>
-                        <Image
-                          style={tw`border h-25 w-25 rounded-full`}
-                          source={{uri: data.selecteduser.profile}}
-                        />
-                        <Text style={tw`text-base font-bold`}>{data.selecteduser.doctorname}</Text>
-                        <Text style={tw`text-base font-light`}>{data.selecteduser.doctortypelabel}</Text>
-                        <Text style={tw`text-base font-light`}>{data.selecteduser.doctortimefromlabel} To {data.selecteduser.doctortimetolabel}</Text>
-                      </View>
+                    GetData.map((data, index) => (
+                      <TouchableOpacity
+                        onPress={() => {
+                          navigation.navigate("Showappoinments", {
+                            phone: data.selecteduser.doctorphone
+                          })
+                        }}
+                      >
+                        <View key={index} style={tw`border ml-3 mr-3 border-gray-300 h-50 w-45 self-center items-center justify-center mt-5 rounded-md`}>
+                          <Image
+                            style={tw`border h-25 w-25 rounded-full`}
+                            source={{ uri: data.selecteduser.profile }}
+                          />
+                          <Text style={tw`text-base font-bold`}>{data.selecteduser.doctorname}</Text>
+                          <Text style={tw`text-base font-light`}>{data.selecteduser.doctortypelabel}</Text>
+                          <Text style={tw`text-base font-light`}>{data.selecteduser.doctortimefromlabel} To {data.selecteduser.doctortimetolabel}</Text>
+                        </View>
+                      </TouchableOpacity>
                     ))
                   }
 
@@ -112,13 +166,13 @@ const Cbids = ({ navigation }) => {
                   style={[tw`shadow-xl w-30 h-30 items-center justify-center self-center`, { backgroundColor: '#00B1E7' }]}>
                   <Text style={tw`text-white text-lg font-bold`}>Today Appointment</Text>
 
-                  <Text style={tw`text-lg text-white`}>{"10"}</Text>
+                  <Text style={tw`text-lg text-white`}>{GetData1.length} </Text>
                 </View>
 
                 <View
                   style={[tw`shadow-xl bg-blue-500 w-30 h-30  items-center justify-center self-center`, { backgroundColor: '#00B1E7' }]}>
                   <Text style={tw`text-white text-lg font-bold`}>My Total {'\n'}Doctors</Text>
-                  <Text style={tw`text-lg text-white`}>{"10"}</Text>
+                  <Text style={tw`text-lg text-white`}>{GetData2.length}</Text>
                 </View>
 
                 {/* <View

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useCallback, useState } from "react";
 import { Image, View } from 'react-native'
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import tw from "twrnc"
@@ -7,9 +7,31 @@ import Home from "../Tabbar/Home";
 import Profile from "../Tabbar/Profile";
 import Sessions from "../Tabbar/Sessions";
 import Yourplan from "../Tabbar/Yourplan";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useFocusEffect } from "@react-navigation/native";
 const Tab = createBottomTabNavigator();
 
 function Tabbar() {
+    const [userflag, setuserflag] = useState("");
+
+    useFocusEffect(
+        useCallback(() => {
+
+            AsyncStorage.getItem("role").then((role) => {
+                if (role === "user") {
+                    setuserflag(true)
+                }
+                else {
+                    setuserflag(false)
+                }
+            })
+
+            return () => {
+
+            };
+        }, []),
+    );
+
     return (
         <Tab.Navigator
 
@@ -93,9 +115,12 @@ function Tabbar() {
                 })}
                 options={{
 
-                    tabBarLabel: 'Add Doctor',
+                    tabBarLabel: userflag ? "Booked":'Add Doctor',
                     tabBarIcon: ({ focused }) => (
-                        <Image style={tw`h-8 w-8`} source={focused ? require("../../Images/doctorb.png") : require("../../Images/doctor.png")} />
+                        userflag ?
+                            <Image style={tw`h-8 w-8`} source={focused ? require("../../Images/appointment-bookb.png") : require("../../Images/appointment-book.png")} />
+                            :
+                            <Image style={tw`h-8 w-8`} source={focused ? require("../../Images/doctorb.png") : require("../../Images/doctor.png")} />
                     ),
                 }}
                 name="Sessions"
