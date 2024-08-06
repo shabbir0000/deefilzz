@@ -6,7 +6,7 @@ import Toast from 'react-native-toast-message';
 import { useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Screensheader from '../Universal/Screensheader';
-import { collection, deleteDoc, doc, onSnapshot, query, where } from 'firebase/firestore';
+import { collection, deleteDoc, doc, getDocs, onSnapshot, query, where } from 'firebase/firestore';
 import { db } from '../../Firebase';
 // import LinearGradient from 'react-native-linear-gradient'
 
@@ -32,6 +32,7 @@ const Yourplan = ({ navigation }) => {
     }, [])
 
     const [GetData, setGetData] = useState([]);
+    const [GetData1, setGetData1] = useState([]);
 
     useEffect(() => {
 
@@ -52,8 +53,12 @@ const Yourplan = ({ navigation }) => {
         })
     }, []);
 
+    const [allSlots, setAllSlots] = useState([]);
 
-    const getdatabycat = async (cat)=>{
+
+
+
+    const getdatabycat = async (cat) => {
         const coll = collection(db, 'Doctors');
         const q = query(coll, where('doctortypelabel', '==', cat));
 
@@ -69,7 +74,7 @@ const Yourplan = ({ navigation }) => {
         };
     }
 
-    const getalldata = async ()=>{
+    const getalldata = async () => {
         const coll = collection(db, 'Doctors');
         // const q = query(coll, where('doctortypelabel', '==', cat));
 
@@ -106,15 +111,15 @@ const Yourplan = ({ navigation }) => {
 
     const deletedoc = async (docId) => {
         deleteDoc(doc(db, 'Doctors', docId))
-          .then(() => {
-            // setLoading(false);
-            console.log('delete done');
-          })
-          .catch(error => {
-            // setLoading(false);
-            Alert.alert('Error:', error.message);
-          });
-      };
+            .then(() => {
+                // setLoading(false);
+                console.log('delete done');
+            })
+            .catch(error => {
+                // setLoading(false);
+                Alert.alert('Error:', error.message);
+            });
+    };
 
 
 
@@ -186,8 +191,11 @@ const Yourplan = ({ navigation }) => {
                                         <TouchableOpacity
                                             key={index}
                                             onPress={() => {
-                                                navigation.navigate("Showappoinments",{
-                                                    phone : data.selecteduser.doctorphone
+                                                navigation.navigate("Showappoinments", {
+                                                    phone: data.selecteduser.doctorphone,
+                                                    slots: data.selecteduser.slots,
+                                                    usercontrol : true
+                                                    // filledapp: allSlots
                                                 })
                                             }}
                                         >
@@ -196,7 +204,7 @@ const Yourplan = ({ navigation }) => {
                                                     <Image
                                                         style={tw`h-25 w-25 rounded-full`}
                                                         resizeMode='cover'
-                                                        source={{ uri: data.selecteduser.profile}}
+                                                        source={{ uri: data.selecteduser.profile }}
                                                     />
                                                     <View>
                                                         <Text numberOfLines={1} style={tw`font-bold w-40 text-xl`}>{data.selecteduser.doctorname}</Text>
@@ -207,7 +215,7 @@ const Yourplan = ({ navigation }) => {
                                                 <View style={tw`h-20  w-70 `}>
                                                     <View style={tw` items-center h-10  w-70 self-center justify-between flex-row `}>
 
-                                                        <View style={[tw`h-7 w-15 rounded-3xl  border border-blue-300 items-center justify-center`,{ backgroundColor: data.selecteduser.monday === true ? '#00B1E7' : 'white' }]}>
+                                                        <View style={[tw`h-7 w-15 rounded-3xl  border border-blue-300 items-center justify-center`, { backgroundColor: data.selecteduser.monday === true ? '#00B1E7' : 'white' }]}>
                                                             <Text style={tw`text-xs text-black`}>Monday</Text>
                                                         </View>
                                                         <View style={[tw`h-7 w-15 rounded-3xl items-center border border-blue-300 justify-center`, { backgroundColor: data.selecteduser.tuesday === true ? '#00B1E7' : 'white' }]}>
@@ -217,7 +225,7 @@ const Yourplan = ({ navigation }) => {
                                                             <Text style={tw`text-xs text-black`}>Wednesday</Text>
                                                         </View>
 
-                                                        <View style={[tw`h-7 w-15 rounded-3xl  border border-blue-300 items-center justify-center`,{ backgroundColor: data.selecteduser.thursday === true ? '#00B1E7' : 'white' }]}>
+                                                        <View style={[tw`h-7 w-15 rounded-3xl  border border-blue-300 items-center justify-center`, { backgroundColor: data.selecteduser.thursday === true ? '#00B1E7' : 'white' }]}>
                                                             <Text style={tw`text-xs text-black`}>Thursday</Text>
                                                         </View>
 
@@ -235,7 +243,7 @@ const Yourplan = ({ navigation }) => {
                                                         <View style={[tw`h-7 w-15 rounded-3xl items-center border border-blue-300 justify-center`, { backgroundColor: data.selecteduser.saturday === true ? '#00B1E7' : 'white' }]}>
                                                             <Text style={tw`text-xs text-black`}>Saturday</Text>
                                                         </View>
-                                                        <View style={[tw`h-7 w-15 rounded-3xl  border border-blue-300 items-center justify-center`,{ backgroundColor: data.selecteduser.sunday === true ? '#00B1E7' : 'white' }]}>
+                                                        <View style={[tw`h-7 w-15 rounded-3xl  border border-blue-300 items-center justify-center`, { backgroundColor: data.selecteduser.sunday === true ? '#00B1E7' : 'white' }]}>
                                                             <Text style={tw`text-xs text-black`}>Sunday</Text>
                                                         </View>
 
@@ -317,20 +325,22 @@ const Yourplan = ({ navigation }) => {
                                         <TouchableOpacity
                                             key={index}
                                             onPress={() => {
-                                                navigation.navigate("Showappoinments",{
-                                                    phone : data.selecteduser.doctorphone
+                                                navigation.navigate("Showappoinments", {
+                                                    phone: data.selecteduser.doctorphone,
+                                                    slots: data.selecteduser.slots,
+                                                    usercontrol : false,
                                                 })
                                             }}
                                         >
-                                            <View style={[tw`border flex-row justify-around items-center w-80 h-40 rounded-md self-center mt-5`, { borderColor: "#00B1E7" }]}>
-                                                <View style={tw`h-35  w-30`}>
+                                            <View style={[tw`border flex-row justify-around items-center w-80 h-45 rounded-md self-center mt-5`, { borderColor: "#00B1E7" }]}>
+                                                <View style={tw`h-40  w-30`}>
                                                     <Image
-                                                        style={tw`h-35 w-35`}
+                                                        style={tw`h-40 w-35`}
                                                         resizeMode='cover'
                                                         source={{ uri: data.selecteduser.profile }}
                                                     />
                                                 </View>
-                                                <View style={tw`h-35  w-35 `}>
+                                                <View style={tw`h-40 justify-center w-35 `}>
                                                     <Text numberOfLines={1} style={tw`font-bold w-40 text-xl`}>{data.selecteduser.doctorname}</Text>
                                                     <Text numberOfLines={1} style={tw`font-light mt-1 w-40 text-gray-400 text-sm`}>{data.selecteduser.doctortypelabel}</Text>
                                                     <Text numberOfLines={1} style={tw`font-light mt-1 w-40  text-base`}>{data.selecteduser.doctorphone}</Text>
@@ -380,17 +390,17 @@ const Yourplan = ({ navigation }) => {
                                                         </TouchableOpacity>
 
                                                         <TouchableOpacity
-                                                        onPress={()=>{
-                                                            Alert.alert('Alert', 'Are You Sure You Want To Delete', [
-                                                                {
-                                                                  text: 'No',
-                                                                  onPress: () => console.log('Cancel Pressed'),
-                                                                  style: 'cancel',
-                                                                },
-                                                                {text: 'YES', onPress: () => deletedoc(data.selecteduser.userid)},
-                                                              ]);
-                                                            
-                                                        }}
+                                                            onPress={() => {
+                                                                Alert.alert('Alert', 'Are You Sure You Want To Delete', [
+                                                                    {
+                                                                        text: 'No',
+                                                                        onPress: () => console.log('Cancel Pressed'),
+                                                                        style: 'cancel',
+                                                                    },
+                                                                    { text: 'YES', onPress: () => deletedoc(data.selecteduser.userid) },
+                                                                ]);
+
+                                                            }}
                                                         >
                                                             <Image
                                                                 style={tw`h-6 w-6`}
@@ -401,6 +411,17 @@ const Yourplan = ({ navigation }) => {
 
                                                     </View>
 
+                                                    <TouchableOpacity
+                                                        onPress={() => {
+                                                            navigation.navigate("Showappoinments", {
+                                                                phone: data.selecteduser.doctorphone,
+                                                                slots: data.selecteduser.slots,
+                                                                usercontrol : true,
+                                                            })
+                                                        }}
+                                                    >
+                                                        <Text numberOfLines={1} style={tw`font-light mt-1 w-40 text-black underline text-base`}>Fill The Own Slots</Text>
+                                                    </TouchableOpacity>
                                                 </View>
                                             </View>
                                         </TouchableOpacity>

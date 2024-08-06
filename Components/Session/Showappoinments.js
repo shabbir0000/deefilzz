@@ -8,20 +8,21 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import Screensheader from '../../Screens/Universal/Screensheader';
 import { Buttonnormal } from '../../Screens/Universal/Buttons';
 import { Calendar } from 'react-native-calendars'
-import { collection, doc, onSnapshot, query, serverTimestamp, setDoc, updateDoc, where } from 'firebase/firestore';
+import { collection, doc, getDocs, onSnapshot, query, serverTimestamp, setDoc, updateDoc, where } from 'firebase/firestore';
 import { db } from '../../Firebase';
 import uuid from 'react-native-uuid';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
-// import LinearGradient from 'react-native-linear-gradient'
+import { Dropdown } from 'react-native-element-dropdown';
+// import LinearGradient f,slotsrom 'react-native-linear-gradient'
 
 const Showappointments = ({ navigation, route }) => {
-    const { phone } = route.params;
+    const { phone, slots,usercontrol } = route.params;
     const [email, setemail] = useState("");
-    const [device, setdevice] = useState([]);
+    const [slotsselect, setslotsselect] = useState([]);
     const [dayselect, setdayselect] = useState("");
     const [price, setprice] = useState("");
     const [cat, setcat] = useState("Today All")
-    const [userflag, setuserflag] = useState(true);
+    const [userflag, setuserflag] = useState(usercontrol);
     const [loading, setloading] = useState(false);
     const [loading1, setloading1] = useState(false);
     const [GetData, setGetData] = useState([]);
@@ -33,12 +34,73 @@ const Showappointments = ({ navigation, route }) => {
     const [date, setdate] = useState("")
     const [model1, setmodel1] = useState(false)
     const [time, settime] = useState("")
+    const [value2, setValue2] = useState("");
+    const [label2, setlabel2] = useState("");
+    const [isFocus2, setIsFocus2] = useState(false);
+    const [start, setStart] = useState('');
+    const [end, setEnd] = useState('');
 
+
+    const fetchSlots = async (tempdate) => {
+        try {
+            const q = query(
+                collection(db, 'Filledapp'),
+                where('bookdate', '==', tempdate),
+                where('doctorphone', '==', phone)
+            );
+            const querySnapshot = await getDocs(q);
+            const slotsArray = querySnapshot.docs.map((doc) => ({
+                start: doc.data().start,
+                end: doc.data().end,
+            }));
+              
+            // setAllSlots(slotsArray);
+            console.log("filledapp",slotsArray);
+            
+            const uniqueSlots =  removeSlotsFromArray(slotsArray,slots);
+            console.log("unique",uniqueSlots);
+            
+            const transformedData = uniqueSlots.map((slot, index) => ({
+                label: `${slot.start} ,${slot.end}`,
+                value: index.toString()
+            }));
+            console.log('Unique Slots:', transformedData);
+
+            setslotsselect(transformedData);
+
+        } catch (error) {
+            console.error('Error fetching documents: ', error);
+        }
+    };
+
+
+    const areSlotsEqual = (slot1, slot2) => {
+        return slot1.start === slot2.start && slot1.end === slot2.end;
+    };
+    
+    const removeSlotsFromArray = (arr1, arr2) => {
+        let filteredArr2 = [...arr2];
+         
+        arr1.forEach(slot1 => {
+         
+            
+            filteredArr2 = filteredArr2.filter(slot2 => !areSlotsEqual(slot1, slot2));
+            console.log("filtereddddd",filteredArr2);
+        });
+        
+        return filteredArr2;
+    };
 
     useEffect(() => {
-        AsyncStorage.getItem("role").then((role) => {
-            if (role === "user") {
-                setuserflag(true)
+
+
+
+        fetchSlots(showdate);
+        // Helper function to check if two slot objects are equal
+
+        // AsyncStorage.getItem("role").then((role) => {
+            if (userflag === true) {
+                // setuserflag(true)
                 AsyncStorage.getItem("email").then((email) => {
                     setemail(email)
                     const coll = collection(db, 'Doctors');
@@ -58,9 +120,9 @@ const Showappointments = ({ navigation, route }) => {
             }
             else {
                 showtodayappointment()
-                setuserflag(false)
+                // setuserflag(false)
             }
-        })
+        // })
     }, [])
 
     useEffect(() => {
@@ -100,9 +162,10 @@ const Showappointments = ({ navigation, route }) => {
     ];
 
 
+ 
 
     const bookappointment = async (doctorname, doctorphone, monday, tuesday, wednesday, thursday, friday, saturday, sunday, label2, label, label1, url) => {
-        if (!doctorname || !doctorphone || !time || !date) {
+        if (!doctorname || !doctorphone || !start || !end || !date) {
             showToast("error", "Field Required", "Must Fill All The Field", true, 1000)
         }
 
@@ -115,7 +178,8 @@ const Showappointments = ({ navigation, route }) => {
                 username: GetData1[0].selecteduser.fullname,
                 phone: GetData1[0].selecteduser.phone,
                 bookdate: date,
-                booktime: time,
+                bookstime: start.trim(),
+                booketime: end.trim(),
                 monday: monday,
                 tuesday: tuesday,
                 wednesday: wednesday,
@@ -134,7 +198,22 @@ const Showappointments = ({ navigation, route }) => {
             })
                 .then(() => {
                     console.log('done');
-
+                    setDoc(doc(db, 'Filledapp', userid), {
+                        doctorname: doctorname,
+                        doctorphone: doctorphone,
+                        doctortypelabel: label2,
+                        username: GetData1[0].selecteduser.fullname,
+                        phone: GetData1[0].selecteduser.phone,
+                        bookdate: date,
+                        start: start.trim(),
+                        end: end.trim(),
+                        userid,
+                        email: email,
+                        todaydate: showdate,
+                        status: "confirmed",
+                        timestamp: serverTimestamp(),
+                      
+                    })
                     setloading(false)
                     Alert.alert('Congratulation', 'Appointment Has Been Booked', [
                         {
@@ -228,7 +307,7 @@ const Showappointments = ({ navigation, route }) => {
         setmodel1(false);
     };
 
-    const updatedoc = async (status,apid) => {
+    const updatedoc = async (status, apid) => {
         setloading1(true)
         updateDoc(doc(db, 'Appointment', apid), {
             status: status
@@ -275,6 +354,7 @@ const Showappointments = ({ navigation, route }) => {
 
                             <ScrollView style={tw`flex-1 mb-5 self-center `} showsVerticalScrollIndicator={false}>
                                 {
+
                                     GetData.map((data, index) => (
                                         < >
                                             <View key={index} style={[tw` flex-row justify-around items-center  w-80 h-35  self-center `]}>
@@ -298,7 +378,7 @@ const Showappointments = ({ navigation, route }) => {
 
                                             </View>
 
-                                            <View style={tw` self-center items-center justify-center w-80 h-20 `}>
+                                            <View style={tw` self-center items-center justify-center w-80 h-40 `}>
                                                 <Text style={tw`font-light text-sm`}>
                                                     {`At Dee-Felz, we provide top-notch healthcare with leading doctors like `}
                                                     <Text style={tw`font-semibold`}>
@@ -308,15 +388,15 @@ const Showappointments = ({ navigation, route }) => {
                                                     <Text style={tw`font-semibold`}>
                                                         {data.selecteduser.doctortypelabel}
                                                     </Text>
-                                                    {/* {`. Our clinic ensures exceptional care with skilled professionals dedicated to your well-being. From expert diagnosis to advanced treatments, trust Dee-Felz for unparalleled medical attention.`} */}
+                                                    {`. Our clinic ensures exceptional care with skilled professionals dedicated to your well-being. From expert diagnosis to advanced treatments, trust Dee-Felz for unparalleled medical attention.`}
                                                 </Text>
 
                                             </View>
 
-                                            <View style={tw`h-80  mb-5  justify-between flex-col w-80 self-center `}>
+                                            <View style={tw`h-60  mb-5  justify-between flex-col w-80 self-center `}>
 
 
-                                                <View style={tw`h-20  self-center  w-80 `}>
+                                                <View style={tw`h-18  self-center  w-80 `}>
                                                     <View style={tw` items-center h-10  w-70 self-center justify-between flex-row `}>
 
                                                         <View style={[tw`h-7 w-15 rounded-3xl  border border-blue-300 items-center justify-center`, { backgroundColor: data.selecteduser.monday === true ? '#00B1E7' : 'lightgray' }]}>
@@ -355,15 +435,15 @@ const Showappointments = ({ navigation, route }) => {
 
                                                 </View>
 
-                                                <View style={tw` w-80 h-22 justify-between self-center `}>
-                                                    <Text style={tw`font-extralight`}>Select Data When Doctor Available otherwise Your Appointmment Will Be Cancelled</Text>
+                                                <View style={tw` w-80 h-16 justify-between self-center `}>
+                                                    <Text style={tw`font-extralight`}>Select Data</Text>
                                                     <TouchableOpacity
                                                         onPress={() => {
                                                             setmodel(!model)
                                                         }}
                                                     >
-                                                        <View style={tw`h-10 w-80 items-center justify-center border border-blue-400`}>
-                                                            <Text style={tw`text-lg font-normal`}>{date ? date : "SELECT APPOINTMENT DATE"}</Text>
+                                                        <View style={tw`h-10 w-80 items-start  justify-center border border-blue-400`}>
+                                                            <Text style={tw`text-lg ml-2 font-normal`}>{date ? date : "SELECT APPOINTMENT DATE"}</Text>
 
                                                         </View>
                                                     </TouchableOpacity>
@@ -373,6 +453,8 @@ const Showappointments = ({ navigation, route }) => {
                                                     isVisible={model}
                                                     mode="date"
                                                     onConfirm={day => {
+                                                        const dd = day.getFullYear() + '/' + (day.getMonth() + 1) + '/' + day.getDate();
+                                                        fetchSlots(dd)
                                                         setdate(
 
                                                             day.getFullYear() +
@@ -389,29 +471,40 @@ const Showappointments = ({ navigation, route }) => {
                                                 />
 
 
-                                                <View style={tw` w-80 h-22 justify-between self-center `}>
-                                                    <Text style={tw`font-extralight`}>Select Time Between When Doctor Available otherwise Your Appointmment Will Be Cancelled</Text>
-                                                    <TouchableOpacity
-                                                        onPress={() => {
-                                                            setmodel1(!model1)
+                                                <View style={tw` w-80 h-16 justify-between self-center `}>
+                                                    <Text style={tw`font-extralight`}>Select Time Slot</Text>
+
+                                                    <Dropdown
+                                                        style={[tw`h-10 w-80 border border-blue-500  bg-white rounded-sm`, { backgroundColor: "#FFFFFF" }]}
+                                                        placeholderStyle={tw`ml-3 text-black text-lg `}
+                                                        selectedTextStyle={tw`ml-3 text-gray-400  `}
+                                                        containerStyle={tw`h-80 w-80  mt-7 bg-gray-100 rounded-md`}
+                                                        data={slotsselect}
+                                                        maxHeight={300}
+                                                        labelField="label"
+                                                        valueField="value"
+                                                        placeholder={'SELECT DOCTOR SLOT'}
+                                                        mode='modal'
+
+                                                        value={value2}
+                                                        onFocus={() => setIsFocus2(true)}
+                                                        onBlur={() => setIsFocus2(false)}
+                                                        onChange={item => {
+                                                            const timeString = item.label
+                                                            const timeArray = timeString.split(',');
+
+                                                            if (timeArray.length === 2) {
+                                                                setStart(timeArray[0]);
+                                                                setEnd(timeArray[1]);
+                                                            }
+                                                            console.log("time", item.label);
+                                                            setlabel2(item.label)
+                                                            setValue2(item.value);
+                                                            setIsFocus2(false);
                                                         }}
-                                                    >
-                                                        <View style={tw`h-10 w-80 items-center justify-center border border-blue-400`}>
-                                                            <Text style={tw`text-lg font-normal`}>{time ? time : "SELECT APPOINTMENT TIME"}</Text>
 
-                                                        </View>
-                                                    </TouchableOpacity>
-
+                                                    />
                                                 </View>
-                                                <DateTimePickerModal
-                                                    isVisible={model1}
-                                                    mode="time"
-                                                    onConfirm={handleConfirm}
-                                                    onCancel={() =>
-                                                        setmodel1(!model1)
-                                                    }
-                                                />
-
                                             </View>
 
                                             {
@@ -560,10 +653,10 @@ const Showappointments = ({ navigation, route }) => {
                                                         loading1 ?
                                                             <ActivityIndicator size="large" style={tw`mt-5`} color="#00B1E7" />
                                                             :
-                                                            <TouchableOpacity 
-                                                            onPress={()=>{
-                                                                updatedoc(data.selecteduser.status === "confirmed" ? 'cancelled' : 'confirmed' ,data.selecteduser.userid)
-                                                            }}
+                                                            <TouchableOpacity
+                                                                onPress={() => {
+                                                                    updatedoc(data.selecteduser.status === "confirmed" ? 'cancelled' : 'confirmed', data.selecteduser.userid)
+                                                                }}
                                                             >
                                                                 <View style={tw` rounded-md bg-slate-200 w-70 items-center justify-center h-10 mt-5 `}>
 

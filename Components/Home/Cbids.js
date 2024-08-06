@@ -123,7 +123,9 @@ const Cbids = ({ navigation }) => {
                       <TouchableOpacity
                         onPress={() => {
                           navigation.navigate("Showappoinments", {
-                            phone: data.selecteduser.doctorphone
+                            phone: data.selecteduser.doctorphone,
+                            slots: data.selecteduser.slots,
+                            usercontrol : true,
                           })
                         }}
                       >

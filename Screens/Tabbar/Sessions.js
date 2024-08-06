@@ -303,6 +303,39 @@ const Sessions = ({ navigation, route }) => {
 
 
 
+    const calculateSessionSlots = (startTime, endTime, sessionDuration) => {
+        const convertTo24HourFormat = (time) => {
+          const [timePart, modifier] = time.split(' ');
+          let [hours, minutes] = timePart.split(':');
+      
+          if (hours === '12') {
+            hours = '00';
+          }
+      
+          if (modifier === 'PM' && hours !== '12') {
+            hours = parseInt(hours, 10) + 12;
+          }
+      
+          return `${String(hours).padStart(2, '0')}:${minutes}`;
+        };
+      
+        const slots = [];
+        let start = new Date(`1970-01-01T${convertTo24HourFormat(startTime)}:00`);
+        let end = new Date(`1970-01-01T${convertTo24HourFormat(endTime)}:00`);
+        const sessionInMs = sessionDuration * 60 * 1000;
+      
+        while (start.getTime() + sessionInMs <= end.getTime()) {
+          const endSession = new Date(start.getTime() + sessionInMs);
+          slots.push({
+            start: start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true }),
+            end: endSession.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true }),
+          });
+          start = endSession;
+        }
+      
+        return slots;
+      };
+
 
     const uploaddocfile = async (doctorname, doctorphone) => {
         console.log("data :", doctorname, doctorphone, value, value1, value2, imglink1);
@@ -326,6 +359,8 @@ const Sessions = ({ navigation, route }) => {
         }
 
         else {
+
+            const slots =  calculateSessionSlots(label,label1,45)
             setDoc(doc(db, 'Doctors', userid), {
                 doctorname: doctorname,
                 doctorphone: doctorphone,
@@ -342,6 +377,7 @@ const Sessions = ({ navigation, route }) => {
                 doctortimefromlabel: label,
                 doctortimeto: value1,
                 doctortimetolabel: label1,
+                slots : slots,
                 userid,
                 timestamp: serverTimestamp(),
                 profile: url
@@ -349,6 +385,7 @@ const Sessions = ({ navigation, route }) => {
                 .then(() => {
                     console.log('done');
                     //  setfiledata1(null)
+                   
                     setmonday(false)
                     settuesday(false)
                     setwednesday(false)
@@ -401,7 +438,7 @@ const Sessions = ({ navigation, route }) => {
     };
 
     const updatedoc = async (doctorname, doctorphone, url) => {
-
+        const slots =  calculateSessionSlots(label,label1,45)
         updateDoc(doc(db, 'Doctors', docid), {
             doctorname: doctorname,
             doctorphone: doctorphone,
@@ -419,6 +456,7 @@ const Sessions = ({ navigation, route }) => {
             doctortimeto: value1,
             doctortimetolabel: label1,
             userid: docid,
+            slots:slots,
             profile: url,
             timestamp: serverTimestamp(),
         })
