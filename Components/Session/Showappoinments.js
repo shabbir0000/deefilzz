@@ -16,11 +16,12 @@ import { Dropdown } from 'react-native-element-dropdown';
 // import LinearGradient f,slotsrom 'react-native-linear-gradient'
 
 const Showappointments = ({ navigation, route }) => {
-    const { phone, slots,usercontrol } = route.params;
+    const { phone, slots, usercontrol } = route.params;
     const [email, setemail] = useState("");
     const [slotsselect, setslotsselect] = useState([]);
     const [dayselect, setdayselect] = useState("");
     const [price, setprice] = useState("");
+    const [updatedocid, setupdatedocid] = useState("");
     const [cat, setcat] = useState("Today All")
     const [userflag, setuserflag] = useState(usercontrol);
     const [loading, setloading] = useState(false);
@@ -53,13 +54,13 @@ const Showappointments = ({ navigation, route }) => {
                 start: doc.data().start,
                 end: doc.data().end,
             }));
-              
+
             // setAllSlots(slotsArray);
-            console.log("filledapp",slotsArray);
-            
-            const uniqueSlots =  removeSlotsFromArray(slotsArray,slots);
-            console.log("unique",uniqueSlots);
-            
+            console.log("filledapp", slotsArray);
+
+            const uniqueSlots = removeSlotsFromArray(slotsArray, slots);
+            console.log("unique", uniqueSlots);
+
             const transformedData = uniqueSlots.map((slot, index) => ({
                 label: `${slot.start} ,${slot.end}`,
                 value: index.toString()
@@ -77,17 +78,17 @@ const Showappointments = ({ navigation, route }) => {
     const areSlotsEqual = (slot1, slot2) => {
         return slot1.start === slot2.start && slot1.end === slot2.end;
     };
-    
+
     const removeSlotsFromArray = (arr1, arr2) => {
         let filteredArr2 = [...arr2];
-         
+
         arr1.forEach(slot1 => {
-         
-            
+
+
             filteredArr2 = filteredArr2.filter(slot2 => !areSlotsEqual(slot1, slot2));
-            console.log("filtereddddd",filteredArr2);
+            console.log("filtereddddd", filteredArr2);
         });
-        
+
         return filteredArr2;
     };
 
@@ -99,29 +100,29 @@ const Showappointments = ({ navigation, route }) => {
         // Helper function to check if two slot objects are equal
 
         // AsyncStorage.getItem("role").then((role) => {
-            if (userflag === true) {
-                // setuserflag(true)
-                AsyncStorage.getItem("email").then((email) => {
-                    setemail(email)
-                    const coll = collection(db, 'Doctors');
-                    const q = query(coll, where("doctorphone", '==', phone));
+        if (userflag === true) {
+            // setuserflag(true)
+            AsyncStorage.getItem("email").then((email) => {
+                setemail(email)
+                const coll = collection(db, 'Doctors');
+                const q = query(coll, where("doctorphone", '==', phone));
 
-                    const unSubscribe = onSnapshot(q, snapshot => {
-                        setGetData(
-                            snapshot.docs.map(doc => ({
-                                selecteduser: doc.data(),
-                            })),
-                        );
-                    });
-                    return () => {
-                        unSubscribe();
-                    };
-                })
-            }
-            else {
-                showtodayappointment()
-                // setuserflag(false)
-            }
+                const unSubscribe = onSnapshot(q, snapshot => {
+                    setGetData(
+                        snapshot.docs.map(doc => ({
+                            selecteduser: doc.data(),
+                        })),
+                    );
+                });
+                return () => {
+                    unSubscribe();
+                };
+            })
+        }
+        else {
+            showtodayappointment()
+            // setuserflag(false)
+        }
         // })
     }, [])
 
@@ -162,7 +163,7 @@ const Showappointments = ({ navigation, route }) => {
     ];
 
 
- 
+
 
     const bookappointment = async (doctorname, doctorphone, monday, tuesday, wednesday, thursday, friday, saturday, sunday, label2, label, label1, url) => {
         if (!doctorname || !doctorphone || !start || !end || !date) {
@@ -212,7 +213,7 @@ const Showappointments = ({ navigation, route }) => {
                         todaydate: showdate,
                         status: "confirmed",
                         timestamp: serverTimestamp(),
-                      
+
                     })
                     setloading(false)
                     Alert.alert('Congratulation', 'Appointment Has Been Booked', [
@@ -279,7 +280,7 @@ const Showappointments = ({ navigation, route }) => {
     const showtodaycancelledappointment = async () => {
         AsyncStorage.getItem("email").then((email) => {
             const coll = collection(db, 'Appointment');
-            const q = query(coll, where('doctorphone', '==', phone), where('todaydate', '==', showdate), where('status', '==', "cancelled"));
+            const q = query(coll, where('doctorphone', '==', phone), where('bookdate', '==', showdate), where('status', '==', "cancelled"));
 
             const unSubscribe = onSnapshot(q, snapshot => {
                 setGetData(
@@ -393,7 +394,7 @@ const Showappointments = ({ navigation, route }) => {
 
                                             </View>
 
-                                            <View style={tw`h-60  mb-5  justify-between flex-col w-80 self-center `}>
+                                            <View style={tw`h-40  mb-5  justify-between flex-col w-80 self-center `}>
 
 
                                                 <View style={tw`h-18  self-center  w-80 `}>
@@ -435,55 +436,57 @@ const Showappointments = ({ navigation, route }) => {
 
                                                 </View>
 
-                                                <View style={tw` w-80 h-16 justify-between self-center `}>
-                                                    <Text style={tw`font-extralight`}>Select Data</Text>
-                                                    <TouchableOpacity
-                                                        onPress={() => {
+
+
+
+                                                <View style={tw` w-80 h-16  flex-row justify-between items-center self-center `}>
+                                                    <View style={tw` w-35 h-10 justify-between self-center `}>
+
+                                                        <TouchableOpacity
+                                                            onPress={() => {
+                                                                setmodel(!model)
+                                                            }}
+                                                        >
+                                                            <View style={tw`h-10 w-35 items-center rounded-3xl  justify-center border border-blue-400`}>
+                                                                <Text style={tw`text-sm text-gray-500  text-center font-normal`}>{date ? date : "Appointment Date"}</Text>
+
+                                                            </View>
+                                                        </TouchableOpacity>
+
+                                                    </View>
+                                                    <DateTimePickerModal
+                                                        isVisible={model}
+                                                        mode="date"
+                                                        onConfirm={day => {
+                                                            const dd = day.getFullYear() + '/' + (day.getMonth() + 1) + '/' + day.getDate();
+                                                            fetchSlots(dd)
+                                                            setdate(
+
+                                                                day.getFullYear() +
+                                                                '/' +
+                                                                (day.getMonth() + 1) +
+                                                                '/' +
+                                                                day.getDate(),
+                                                            );
                                                             setmodel(!model)
                                                         }}
-                                                    >
-                                                        <View style={tw`h-10 w-80 items-start  justify-center border border-blue-400`}>
-                                                            <Text style={tw`text-lg ml-2 font-normal`}>{date ? date : "SELECT APPOINTMENT DATE"}</Text>
-
-                                                        </View>
-                                                    </TouchableOpacity>
-
-                                                </View>
-                                                <DateTimePickerModal
-                                                    isVisible={model}
-                                                    mode="date"
-                                                    onConfirm={day => {
-                                                        const dd = day.getFullYear() + '/' + (day.getMonth() + 1) + '/' + day.getDate();
-                                                        fetchSlots(dd)
-                                                        setdate(
-
-                                                            day.getFullYear() +
-                                                            '/' +
-                                                            (day.getMonth() + 1) +
-                                                            '/' +
-                                                            day.getDate(),
-                                                        );
-                                                        setmodel(!model)
-                                                    }}
-                                                    onCancel={() =>
-                                                        setmodel(!model)
-                                                    }
-                                                />
+                                                        onCancel={() =>
+                                                            setmodel(!model)
+                                                        }
+                                                    />
 
 
-                                                <View style={tw` w-80 h-16 justify-between self-center `}>
-                                                    <Text style={tw`font-extralight`}>Select Time Slot</Text>
 
                                                     <Dropdown
-                                                        style={[tw`h-10 w-80 border border-blue-500  bg-white rounded-sm`, { backgroundColor: "#FFFFFF" }]}
-                                                        placeholderStyle={tw`ml-3 text-black text-lg `}
-                                                        selectedTextStyle={tw`ml-3 text-gray-400  `}
+                                                        style={[tw`h-10 w-40 border border-blue-500  bg-white rounded-3xl`, { backgroundColor: "#FFFFFF" }]}
+                                                        placeholderStyle={tw`ml-3 text-gray-500 text-sm `}
+                                                        selectedTextStyle={tw`ml-3 text-sm text-gray-400  `}
                                                         containerStyle={tw`h-80 w-80  mt-7 bg-gray-100 rounded-md`}
                                                         data={slotsselect}
                                                         maxHeight={300}
                                                         labelField="label"
                                                         valueField="value"
-                                                        placeholder={'SELECT DOCTOR SLOT'}
+                                                        placeholder={'Doctor Slot'}
                                                         mode='modal'
 
                                                         value={value2}
@@ -531,7 +534,7 @@ const Showappointments = ({ navigation, route }) => {
 
                                                         }}
                                                     >
-                                                        <View style={tw` rounded-md bg-green-400 w-80 self-center items-center justify-center h-10  `}>
+                                                        <View style={tw` rounded-3xl bg-blue-800 w-80 self-center items-center justify-center h-10  `}>
 
                                                             <Text style={tw`text-white`}>
                                                                 BOOK APPOINMENT
@@ -578,15 +581,18 @@ const Showappointments = ({ navigation, route }) => {
                                                         // getcatvideo(item.id)
 
                                                         if (item.text === "Today Cancelled") {
+                                                            setcat(item.text)
                                                             showtodaycancelledappointment()
-                                                            setcat(item.text)
+                                                          
                                                         } else if (item.text === "Today All") {
-                                                            showtodayappointment()
                                                             setcat(item.text)
+                                                            showtodayappointment()
+                                                          
                                                         }
                                                         else {
-                                                            showallappointment()
                                                             setcat(item.text)
+                                                            showallappointment()
+                                                            
                                                         }
 
                                                     }}>
@@ -628,19 +634,19 @@ const Showappointments = ({ navigation, route }) => {
                                                         />
                                                     </View>
 
-                                                    <View style={tw`h-10  justify-around items-center flex-row w-75`}>
+                                                    <View style={tw`h-10  justify-between items-center flex-row w-70`}>
                                                         <Text numberOfLines={1} style={tw`font-normal  text-base`}>{data.selecteduser.bookdate}</Text>
-                                                        <Text numberOfLines={1} style={tw`font-normal   text-sm`}>{data.selecteduser.booktime}</Text>
-                                                        <Text numberOfLines={1} style={tw`font-normal text-green-500   text-base`}>{data.selecteduser.status}</Text>
+                                                        <Text numberOfLines={1} style={tw`font-normal   text-sm`}>{data.selecteduser.bookstime} {"to"} {data.selecteduser.booketime}</Text>
+                                                        {/* <Text numberOfLines={1} style={tw`font-normal text-green-500   text-base`}>{data.selecteduser.status}</Text> */}
 
 
                                                     </View>
 
-                                                    <View style={tw`h-10  justify-around items-center flex-row w-70`}>
-                                                        <Text numberOfLines={1} style={tw`font-normal text-start   w-40  text-base`}>{data.selecteduser.username}</Text>
+                                                    <View style={tw`h-10  justify-between items-center flex-row w-70 `}>
+                                                        <Text numberOfLines={1} style={tw`font-normal text-start   w-35  text-base`}>{data.selecteduser.username}</Text>
                                                         <TouchableOpacity
                                                             onPress={() => (
-                                                                Linking.openURL(`whatsapp://send?text=Hello ${data.selecteduser.username}\nYou Booked Appoinment in Dee-felz Clinic\nYour Booking Date And Time is\n${data.selecteduser.bookdate} ${data.selecteduser.booktime}&phone=${data.selecteduser.phone}`)
+                                                                Linking.openURL(`whatsapp://send?text=Hello ${data.selecteduser.username}\nYou Booked Appoinment in Dee-felz Clinic\nYour Booking Date And Time is\n${data.selecteduser.bookdate} \nFrom ${data.selecteduser.bookstime} To ${data.selecteduser.booketime} &phone=${data.selecteduser.phone}`)
                                                             )}
                                                         >
                                                             <Text numberOfLines={1} style={tw`font-normal text-right underline w-30 text-sm`}>{data.selecteduser.phone}</Text>
@@ -650,11 +656,12 @@ const Showappointments = ({ navigation, route }) => {
                                                     </View>
 
                                                     {
-                                                        loading1 ?
+                                                        loading1 && data.selecteduser.userid === updatedocid ?
                                                             <ActivityIndicator size="large" style={tw`mt-5`} color="#00B1E7" />
                                                             :
                                                             <TouchableOpacity
                                                                 onPress={() => {
+                                                                    setupdatedocid(data.selecteduser.userid)
                                                                     updatedoc(data.selecteduser.status === "confirmed" ? 'cancelled' : 'confirmed', data.selecteduser.userid)
                                                                 }}
                                                             >

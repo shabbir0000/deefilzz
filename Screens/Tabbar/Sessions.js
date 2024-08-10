@@ -580,8 +580,8 @@ const Sessions = ({ navigation, route }) => {
 
                                                             <View style={tw`h-10  justify-around items-start flex-row w-75`}>
                                                                 <Text numberOfLines={1} style={tw`font-normal  text-base`}>{data.selecteduser.bookdate}</Text>
-                                                                <Text numberOfLines={1} style={tw`font-normal   text-sm`}>{data.selecteduser.booktime}</Text>
-                                                                <Text numberOfLines={1} style={tw`font-normal text-green-500   text-base`}>{data.selecteduser.status.toUpperCase()}</Text>
+                                                                <Text numberOfLines={1} style={tw`font-normal   text-sm`}>{data.selecteduser.bookstime} To {data.selecteduser.booketime} </Text>
+                                                                {/* <Text numberOfLines={1} style={tw`font-normal text-green-500   text-base`}>{data.selecteduser.status.toUpperCase()}</Text> */}
 
 
                                                             </View>
